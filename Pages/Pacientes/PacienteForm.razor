@@ -1,0 +1,191 @@
+﻿<!--<EditForm Model="@Paciente" OnValidSubmit="@OnValidSubmit">-->
+<RadzenTemplateForm Data="@Paciente" TItem=PacienteDTO Submit=@OnValidSubmit>
+    <!--<DataAnnotationsValidator />
+        <ValidationSummary />-->
+    <RadzenRow Gap="2rem" Class="rz-p-0 rz-p-lg-4">
+        <RadzenColumn Size="12" SizeMD="12">
+            <RadzenStack>
+                <RadzenFieldset Text="Informações de Contato">
+                    <RadzenStack Gap="1rem">
+                        <RadzenRow AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="12" SizeMD="1">
+                                <RadzenLabel Text="Nome" Component="Nome" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="8">
+                               <RadzenTextBox Style="width: 100%;" Name="Nome" @bind-Value="@Paciente.Nome"/>
+                               <RadzenRequiredValidator Component="Nome" Popup=true Text="O campo nome é obrigatório" Style="position: absolute" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <RadzenTabs SelectedIndex="0">
+                            <Tabs>
+                                <RadzenTabsItem Text="Endereço">
+                                    <RadzenStack>
+                                        <RadzenRow AlignItems="AlignItems.Center">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenLabel Text="Country" Component="Country" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="8">
+                                                <RadzenDropDown @bind-Value="order.Country" Placeholder="USA" Data="@countries" Style="width: 100%;" TextProperty="Name" ValueProperty="Id" Name="Country">
+                                                </RadzenDropDown>
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        <RadzenRow AlignItems="AlignItems.Center">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenLabel Text="City" Component="City" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="8">
+                                                <RadzenTextBox Style="width: 100%;" Name="City" />
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        <RadzenRow AlignItems="AlignItems.Center">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenLabel Text="Address Line 1" Component="Address1" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="8">
+                                                <RadzenTextBox Style="width: 100%;" Name="Address1" />
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        <RadzenRow AlignItems="AlignItems.Center">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenLabel Text="Address Line 2" Component="Address2" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="8">
+                                                <RadzenTextBox Style="width: 100%;" Name="Address2" />
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        <RadzenRow AlignItems="AlignItems.Center">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenLabel Text="State / Province / Region" Component="State" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="8">
+                                                <RadzenTextBox Style="width: 100%;" Name="State" />
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        <RadzenRow AlignItems="AlignItems.Center">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenLabel Text="Zip / Postal Code" Component="Zip" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="8">
+                                                <RadzenTextBox Style="width: 100%;" Name="Zip" />
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                    </RadzenStack>
+                                </RadzenTabsItem>
+                            </Tabs>
+                        </RadzenTabs>
+                    </RadzenStack>
+                </RadzenFieldset>
+            </RadzenStack>
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenStack Orientation="Orientation.Horizontal">
+        <RadzenRow Gap="2rem" Class="rz-p-0 rz-p-lg-4">
+              <RadzenStack>
+                <RadzenFieldset Text="Operações">
+                    <RadzenStack Gap="2rem">
+                        <RadzenRow AlignItems="AlignItems.Center">
+                             <RadzenColumn Size="12" SizeMD="4">
+                                <button type="submit" class="btn btn-success mt-2">
+                                    @ButtonTextSubmit
+                                </button>
+                             </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <button class="btn btn-danger mt-2"
+                                        @onclick="@(()=> navigation.NavigateTo("Pacientes"))">
+                                    @ButtonTextCancelar
+                                </button>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenStack>
+                </RadzenFieldset>
+            </RadzenStack>
+        </RadzenRow>
+    </RadzenStack>
+</RadzenTemplateForm>
+    <!--</EditForm>-->
+
+
+@code {
+
+    Variant variant = Variant.Filled;
+    AlertSize size = AlertSize.Medium;
+    AlertStyle alertStyle = AlertStyle.Primary;
+
+
+    [Inject]
+    private NavigationManager? navigation { get; set; }
+
+    [Inject]
+    private IPacienteService? _pacienteService { get; set; }
+
+    [Parameter]
+    public PacienteDTO? Paciente { get; set; }
+
+    [Parameter]
+    public EventCallback OnValidSubmit { get; set; }
+
+    [Parameter]
+    public string ButtonTextSubmit { get; set; } = "Salvar";
+
+    [Parameter]
+    public string ButtonTextCancelar { get; set; } = "Cancelar";
+
+
+    public class Order
+    {
+        public int CardId { get; set; }
+        public string CardNr { get; set; }
+        public DateTime ExpiryDate { get; set; }
+        public string CardHolder { get; set; }
+        public string Name { get; set; }
+        public string Address1 { get; set; }
+        public string Address2 { get; set; }
+        public string City { get; set; }
+        public string State { get; set; }
+        public string Zip { get; set; }
+        public int Country { get; set; }
+        public int StoreId { get; set; }
+        public string Warehouse { get; set; }
+        public string Region { get; set; }
+        public string System { get; set; }
+        public int TransId { get; set; }
+        public string Register { get; set; }
+        public string Clerk { get; set; }
+        public decimal Amount { get; set; }
+        public decimal Tax { get; set; }
+        public DateTime OrderDate { get; set; }
+        public DateTime ShipDate { get; set; }
+    }
+
+    public class CreditCard
+    {
+        public int CardId { get; set; }
+        public string CardNr { get; set; }
+    }
+
+    public class Country
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    Order order = new Order()
+        {
+            ExpiryDate = DateTime.Parse("10/10/2022"),
+            OrderDate = DateTime.Now,
+            ShipDate = DateTime.Now
+        };
+
+    List<CreditCard> cards = new List<CreditCard>()
+{
+        new CreditCard() { CardId = 1, CardNr = "5555555555554444" },
+        new CreditCard() { CardId = 2, CardNr = "4012888888881881" }
+    };
+
+    List<Country> countries = new List<Country>()
+{
+        new Country() { Id = 1, Name = "USA" },
+        new Country() { Id = 2, Name = "Germany" }
+    };
+   
+}

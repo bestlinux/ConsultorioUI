@@ -1,0 +1,24 @@
+﻿@page "/paciente/create"
+@inject IPacienteService _pacienteService
+@inject NavigationManager navigation
+
+<PacienteForm Paciente="@paciente" OnValidSubmit="CriarPaciente"
+              ButtonTextCancelar="Cancelar"
+              ButtonTextSubmit="Salvar" />
+
+@code {
+    private PacienteDTO paciente = new PacienteDTO();
+
+    async Task CriarPaciente()
+    {
+        try
+        {
+            await _pacienteService.CreatePaciente(paciente);
+            navigation.NavigateTo("pacientes");
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+}
