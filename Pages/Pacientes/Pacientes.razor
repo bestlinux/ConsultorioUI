@@ -1,10 +1,286 @@
 ﻿@page "/pacientes"
 @inject IPacienteService _pacienteService
 @inject NavigationManager NavigationManager
+@inject NavigationManager navigation
+@inject DialogService DialogService
 
 <h3>Pacientes</h3>
-
+<style>
+    .rz-grid-table {
+        width: unset;
+    }
+</style>
+@if (MensagemErro is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        @MensagemErro
+    </RadzenAlert>
+}
 <div>
-    <a class="btn btn-success" href="paciente/create">Novo Paciente</a>
+    <RadzenButton Click=@(args => OnClick()) ButtonStyle="ButtonStyle.Secondary" Icon="add_circle_outline" class="mt-2 mb-4" Text="Novo Paciente" />
 </div>
-<br />
+<RadzenDataGrid @ref="ordersGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="10" AllowSorting="true" EditMode="DataGridEditMode.Single" IsLoading=@isLoading
+                Data="@orders" TItem="PacienteDTO" RowCreate="@OnCreateRow" RowUpdate="@OnUpdateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+    <Columns>
+        <RadzenDataGridColumn TItem="PacienteDTO" Property="Nome" Title="Nome" Width="200px" Frozen="true">
+            <Template Context="order">
+                <RadzenLink Icon="accessibility" Path=@($"/paciente/edit/" + order.Id) Text=@order.Nome />
+            </Template>
+            <EditTemplate Context="order">
+                <RadzenTextBox @bind-Value="order.Nome" Style="width:200px; display: block" Name="Nome" />
+                <RadzenRequiredValidator Text="Nome is required" Component="Nome" Popup="true" />
+            </EditTemplate>
+            <FooterTemplate>
+                Total de pacientes cadastrados: <b>@orders.Count()</b>
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="PacienteDTO" Property="Email" Title="Email">
+            <EditTemplate Context="order">
+                <RadzenTextBox @bind-Value="order.Email" Style="width:200px; display: block" Name="Email" />
+                <RadzenRequiredValidator Text="Email is required" Component="Email" Popup="true" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="PacienteDTO" Property="DataNascimento" Title="Data de Nascimento">
+            <Template Context="order">
+                @String.Format("{0:d}", order.DataNascimento)
+            </Template>
+            <EditTemplate Context="order">
+                <RadzenDatePicker @bind-Value="order.DataNascimento" Name="RadzenDatePickerBindValue" DateFormat="dd/MM/yyyy" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="PacienteDTO" Property="Telefone" Title="Telefone">
+            <EditTemplate Context="order">
+                <RadzenMask Mask="(**) *****-****" CharacterPattern="[0-9]" Placeholder="(00) 00000-0000" Name="Telefone" @bind-Value=@order.Telefone Style="width: 100%;" aria-label="Telefone" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="PacienteDTO" Property="CPF" Title="CPF">
+            <EditTemplate Context="order">
+                <RadzenMask Mask="***.***.***-**" CharacterPattern="[0-9]" Placeholder="000.000.000-00" Name="CPF" @bind-Value=@order.CPF Style="width: 100%;" aria-label="CPF" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="PacienteDTO" Property="Ativo" Title="Ativo" Width="60px">
+            <Template Context="order">
+                @if (order.Ativo == 1)
+                {
+                    <span style='color: var(--rz-success-dark)'>@String.Format("{0:d}", "Ativo")</span>
+                }
+                else
+                {
+                    <span style='color: var(--rz-danger-dark)'>@String.Format("{0:d}", "Inativo")</span>
+                }
+            </Template>
+            <EditTemplate Context="order">
+                <RadzenDropDown @bind-Value="order.Ativo" Data=@statusPaciente TextProperty="Status" ValueProperty="Id" Style="width: 100%; max-width: 400px;" Name="DropDownTextValueProperties" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="PacienteDTO" Property="TipoPagamento" Title="Tipo Pagamento" Width="60px">
+            <Template Context="order">
+                @if (order.TipoPagamento == 1)
+                {
+                    @String.Format("{0:d}", "Mensal")
+                    
+                }
+                else if (order.TipoPagamento == 2)
+                {
+                    @String.Format("{0:d}", "Avulso")
+                    
+                }
+                else
+                {
+                    @String.Format("{0:d}", "Gratuito")
+                    
+                }
+            </Template>
+            <EditTemplate Context="order">
+                <RadzenDropDown @bind-Value="order.Ativo" Data=@statusPaciente TextProperty="Status" ValueProperty="Id" Style="width: 100%; max-width: 400px;" Name="DropDownTextValueProperties" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="PacienteDTO" Property="ValorSessao" Title="Valor da Sessão" Width="60px">
+            <Template Context="order">
+                @String.Format("{0:c}", order.ValorSessao)              
+            </Template>
+            <EditTemplate Context="order">
+                <RadzenNumeric Format="c" ShowUpDown="false" @bind-Value="order.ValorSessao" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="PacienteDTO" Context="order" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+            <Template Context="order">
+                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(order))" @onclick:stopPropagation="true">
+                </RadzenButton>
+                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1"
+                              Click="@(args => ConfirmDelete(order))" @onclick:stopPropagation="true" />
+            </Template>
+            <EditTemplate Context="order">
+                <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(order))">
+                </RadzenButton>
+                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(order))">
+                </RadzenButton>
+            </EditTemplate>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+@code {
+
+    RadzenDataGrid<PacienteDTO> ordersGrid;
+    IEnumerable<PacienteDTO> orders = new List<PacienteDTO>();
+    bool isLoading = false;
+    PacienteDTO orderToInsert;
+    PacienteDTO orderToUpdate;
+
+    public string? MensagemErro { get; set; }
+
+    private string? errorMessage = "Não foi possível acessar os Pacientes";
+
+    IEnumerable<StatusPaciente> statusPaciente;
+
+    public async Task ConfirmDelete(PacienteDTO order)
+    {
+        var confirmationResult = await this.DialogService.Confirm("Você deseja excluir o paciente " + order.Nome + " ?", "Pacientes", new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
+        if (confirmationResult == true)
+        {
+            Reset();
+
+            if (orders.Contains(order))
+            {
+                bool result = await _pacienteService.DeletePaciente(order.Id);
+
+                if (result)
+                {
+                    await CarregarPacientes();
+                    await ordersGrid.Reload();
+                }
+            }
+            else
+            {
+                ordersGrid.CancelEditRow(order);
+                await ordersGrid.Reload();
+            }
+        }
+    }
+
+    void OnClick()
+    {
+        try
+        {
+            navigation.NavigateTo("/paciente/create");
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    void Reset()
+    {
+        orderToInsert = null;
+        orderToUpdate = null;
+    }
+
+    async Task ShowLoading()
+    {
+        isLoading = true;
+
+        await Task.Yield();
+
+        isLoading = false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        List<StatusPaciente> statusPacienteList = new List<StatusPaciente>();
+        statusPacienteList.Add(new StatusPaciente(1, "Ativo"));
+        statusPacienteList.Add(new StatusPaciente(2, "Inativo"));
+        statusPaciente = statusPacienteList;
+    
+        await ShowLoading();
+        try
+        {
+            await CarregarPacientes();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            NavigationManager.NavigateTo("notauthorized");
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os pacientes : {ex.Message}";
+        }
+    }
+
+    async Task CarregarPacientes()
+    {
+        try
+        {
+            orders = await _pacienteService.GetPacientes();
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os pacientes : {ex.Message}";
+        }
+    }
+
+    async Task EditRow(PacienteDTO order)
+    {
+        orderToUpdate = order;
+        await ordersGrid.EditRow(order);
+    }
+
+    async Task OnUpdateRow(PacienteDTO order)
+    {
+        Reset();
+
+        try
+        {
+            await _pacienteService.UpdatePaciente(order);
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao atualizar o paciente : {ex.Message}";
+        }
+    }
+
+    async Task SaveRow(PacienteDTO order)
+    {
+        await ordersGrid.UpdateRow(order);
+    }
+
+    void CancelEdit(PacienteDTO order)
+    {
+        Reset();
+
+        ordersGrid.CancelEditRow(order);
+    }
+
+    async Task DeleteRow(PacienteDTO order)
+    {
+        Reset();
+
+        if (orders.Contains(order))
+        {
+            bool result = await _pacienteService.DeletePaciente(order.Id);
+
+            if (result)
+            {
+                await CarregarPacientes();
+                await ordersGrid.Reload();
+            }
+        }
+        else
+        {
+            ordersGrid.CancelEditRow(order);
+            await ordersGrid.Reload();
+        }
+    }
+
+    async Task InsertRow()
+    {
+        orderToInsert = new PacienteDTO();
+        await ordersGrid.InsertRow(orderToInsert);
+    }
+
+    void OnCreateRow(PacienteDTO order)
+    {
+        orderToInsert = null;
+    }
+}

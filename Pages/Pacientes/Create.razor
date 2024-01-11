@@ -1,24 +1,117 @@
 ﻿@page "/paciente/create"
 @inject IPacienteService _pacienteService
 @inject NavigationManager navigation
+@inject DialogService DialogService
 
 <PacienteForm Paciente="@paciente" OnValidSubmit="CriarPaciente"
               ButtonTextCancelar="Cancelar"
               ButtonTextSubmit="Salvar" />
-
+<div class="rz-m-12">
+    <RadzenProgressBar Value="100" ProgressBarStyle="ProgressBarStyle.Light" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Visible=@busy />
+</div>
+<!--@if (MensagemErro is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        @MensagemErro
+    </RadzenAlert>
+}-->
 @code {
     private PacienteDTO paciente = new PacienteDTO();
+    private bool busy = false;
+    public string? MensagemErro { get; set; }
+
+    async Task ShowBusyDialog(bool withMessageAsString)
+    {
+        try
+        {
+            InvokeAsync(async () =>
+                {
+                //await Task.Delay(2000);
+                try
+                {
+                        // Simulate background task
+                        await _pacienteService.CreatePaciente(paciente);
+                        //busy = false;      
+
+                        // Close the dialog
+                        DialogService.Close();
+                       
+                        navigation.NavigateTo("pacientes");
+                    }
+                    catch (Exception ex)
+                    {
+                        MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+                        DialogService.Close();
+                        //DialogService.Alert(MensagemErro, "ERRO", new AlertOptions() { OkButtonText = "Fechar" });      
+                        await DialogService.OpenAsync("ERRO", ds =>
+                        @<div>
+                             @MensagemErro
+                        </div>, new DialogOptions()
+                                  {
+                                    Style = "color:red"
+                                  });
+                    }
+                });
+
+            if (withMessageAsString)
+            {
+                await BusyDialog("Busy ...");
+            }
+            else
+            {
+                await BusyDialog();
+            }
+        }
+        catch (Exception ex)
+        {
+            DialogService.Close();
+            MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+        }
+    }
+    // Busy dialog from markup
+    async Task BusyDialog()
+    {
+        await DialogService.OpenAsync("", ds =>
+         @<RadzenStack AlignItems="AlignItems.Center" Gap="2rem" Class="rz-p-12">
+        <RadzenImage Path="images/community.svg" Style="width: 200px;" AlternateText="community" />
+        <RadzenText TextStyle="TextStyle.H6">Por favor, aguarde...</RadzenText>
+    </RadzenStack>
+    , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
+
+    // Busy dialog from string
+    async Task BusyDialog(string message)
+    {
+        await DialogService.OpenAsync("", ds =>
+        {
+            RenderFragment content = b =>
+            {
+                b.OpenElement(0, "RadzenRow");
+
+                b.OpenElement(1, "RadzenColumn");
+                b.AddAttribute(2, "Size", "12");
+
+                b.AddContent(3, message);
+
+                b.CloseElement();
+                b.CloseElement();
+            };
+            return content;
+        }, new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
 
     async Task CriarPaciente()
     {
         try
         {
-            await _pacienteService.CreatePaciente(paciente);
-            navigation.NavigateTo("pacientes");
+            //busy = true;
+            await ShowBusyDialog(false);
+           
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw;
+            //busy = false;
+            MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
         }
     }
 }

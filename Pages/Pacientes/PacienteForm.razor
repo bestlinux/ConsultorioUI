@@ -1,19 +1,71 @@
 ﻿<!--<EditForm Model="@Paciente" OnValidSubmit="@OnValidSubmit">-->
 <RadzenTemplateForm Data="@Paciente" TItem=PacienteDTO Submit=@OnValidSubmit>
     <!--<DataAnnotationsValidator />
-        <ValidationSummary />-->
+    <ValidationSummary />-->
     <RadzenRow Gap="2rem" Class="rz-p-0 rz-p-lg-4">
         <RadzenColumn Size="12" SizeMD="12">
             <RadzenStack>
                 <RadzenFieldset Text="Informações de Contato">
                     <RadzenStack Gap="1rem">
                         <RadzenRow AlignItems="AlignItems.Center">
-                            <RadzenColumn Size="12" SizeMD="1">
+                            <RadzenColumn Size="12" SizeMD="4">
                                 <RadzenLabel Text="Nome" Component="Nome" />
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="8">
-                               <RadzenTextBox Style="width: 100%;" Name="Nome" @bind-Value="@Paciente.Nome"/>
+                               <RadzenTextBox Style="width: 100%;" Name="Nome" @bind-Value="@Paciente.Nome" class="w-100" />
                                <RadzenRequiredValidator Component="Nome" Popup=true Text="O campo nome é obrigatório" Style="position: absolute" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <RadzenRow AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Text="Sexo" Component="Sexo" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="8">
+                                <RadzenRadioButtonList @bind-Value=@Paciente.Sexo TValue="int">
+                                    <Items>
+                                        <RadzenRadioButtonListItem Text="Masculino" Value="1" />
+                                        <RadzenRadioButtonListItem Text="Feminino" Value="2" />
+                                        <RadzenRadioButtonListItem Text="Outros" Value="3" />
+                                    </Items>
+                                </RadzenRadioButtonList>
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <RadzenRow AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Text="Data de Nascimento" Component="DataNascimento" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="8">               
+                                <RadzenLabel Text="Selecione a Data" Component="RadzenDatePickerBindValue" Style="margin-right: 8px; vertical-align: middle;" />
+                                <RadzenDatePicker @bind-Value=@Paciente.DataNascimento Name="RadzenDatePickerBindValue" DateFormat="dd/MM/yyyy" />
+                                <RadzenRequiredValidator Component="RadzenDatePickerBindValue" Popup=true Text="A data de nascimento é obrigatória" Style="position: absolute" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <RadzenRow AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Text="Telefone" Component="Telefone" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="8">
+                                <RadzenMask Mask="(**) *****-****" CharacterPattern="[0-9]" Placeholder="(00) 00000-0000" Name="Telefone" @bind-Value=@Paciente.Telefone Style="width: 40%;" aria-label="Telefone" />
+                                <RadzenRequiredValidator Component="Telefone" Popup=true Text="O telefone é obrigatória" Style="position: absolute" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <RadzenRow AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Text="Email" Component="Email" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="8">
+                                <RadzenTextBox Name="Email" @bind-Value=@Paciente.Email class="w-100" />
+                                <RadzenRequiredValidator Component="Email" Text="O email é obrigatório" Popup=true Style="position: absolute" />
+                                <RadzenEmailValidator Component="Email" Text="Coloque um endereço de email válido" Popup=true Style="position: absolute" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <RadzenRow AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Text="CPF" Component="CPF" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="8">
+                                <RadzenMask Mask="***.***.***-**" CharacterPattern="[0-9]" Placeholder="000.000.000-00" Name="CPF" @bind-Value=@Paciente.CPF Style="width: 40%;" aria-label="CPF" />
+                                <RadzenRequiredValidator Component="CPF" Text="O CPF é obrigatório" Popup=true Style="position: absolute" />
                             </RadzenColumn>
                         </RadzenRow>
                         <RadzenTabs SelectedIndex="0">
@@ -22,54 +74,112 @@
                                     <RadzenStack>
                                         <RadzenRow AlignItems="AlignItems.Center">
                                             <RadzenColumn Size="12" SizeMD="4">
-                                                <RadzenLabel Text="Country" Component="Country" />
+                                                <RadzenLabel Text="País" Component="País" />
                                             </RadzenColumn>
                                             <RadzenColumn Size="12" SizeMD="8">
-                                                <RadzenDropDown @bind-Value="order.Country" Placeholder="USA" Data="@countries" Style="width: 100%;" TextProperty="Name" ValueProperty="Id" Name="Country">
+                                                <RadzenDropDown @bind-Value="Paciente.Pais" Placeholder="Brasil" Data="@paises" Style="width: 100%;" TextProperty="Nome" ValueProperty="Id" Name="Pais">
                                                 </RadzenDropDown>
                                             </RadzenColumn>
                                         </RadzenRow>
                                         <RadzenRow AlignItems="AlignItems.Center">
                                             <RadzenColumn Size="12" SizeMD="4">
-                                                <RadzenLabel Text="City" Component="City" />
+                                                <RadzenLabel Text="CEP" Component="CEP" />
                                             </RadzenColumn>
                                             <RadzenColumn Size="12" SizeMD="8">
-                                                <RadzenTextBox Style="width: 100%;" Name="City" />
+                                                <RadzenMask Mask="*****-***" CharacterPattern="[0-9]" Placeholder="00000-000" Name="EP" @bind-Value=@Paciente.CEP Style="width: 40%;" aria-label="CEP" Change=@(args => OnChange(args, "TextBox with placeholder")) />
                                             </RadzenColumn>
                                         </RadzenRow>
                                         <RadzenRow AlignItems="AlignItems.Center">
                                             <RadzenColumn Size="12" SizeMD="4">
-                                                <RadzenLabel Text="Address Line 1" Component="Address1" />
+                                                <RadzenLabel Text="Cidade" Component="Cidade" />
                                             </RadzenColumn>
                                             <RadzenColumn Size="12" SizeMD="8">
-                                                <RadzenTextBox Style="width: 100%;" Name="Address1" />
+                                                <RadzenTextBox Style="width: 100%;" Name="Cidade" @bind-Value=@Paciente.Cidade class="w-100" />
                                             </RadzenColumn>
                                         </RadzenRow>
                                         <RadzenRow AlignItems="AlignItems.Center">
                                             <RadzenColumn Size="12" SizeMD="4">
-                                                <RadzenLabel Text="Address Line 2" Component="Address2" />
+                                                <RadzenLabel Text="Estado" Component="Estado" />
                                             </RadzenColumn>
                                             <RadzenColumn Size="12" SizeMD="8">
-                                                <RadzenTextBox Style="width: 100%;" Name="Address2" />
+                                                <RadzenTextBox Style="width: 100%;" Name="Estado" @bind-Value=@Paciente.Estado class="w-100" />
                                             </RadzenColumn>
                                         </RadzenRow>
                                         <RadzenRow AlignItems="AlignItems.Center">
                                             <RadzenColumn Size="12" SizeMD="4">
-                                                <RadzenLabel Text="State / Province / Region" Component="State" />
+                                                <RadzenLabel Text="Bairro" Component="Bairro" />
                                             </RadzenColumn>
                                             <RadzenColumn Size="12" SizeMD="8">
-                                                <RadzenTextBox Style="width: 100%;" Name="State" />
+                                                <RadzenTextBox Style="width: 100%;" Name="Bairro" @bind-Value=@Paciente.Bairro class="w-100" />
                                             </RadzenColumn>
                                         </RadzenRow>
                                         <RadzenRow AlignItems="AlignItems.Center">
                                             <RadzenColumn Size="12" SizeMD="4">
-                                                <RadzenLabel Text="Zip / Postal Code" Component="Zip" />
+                                                <RadzenLabel Text="Logradouro" Component="Logradouro" />
                                             </RadzenColumn>
                                             <RadzenColumn Size="12" SizeMD="8">
-                                                <RadzenTextBox Style="width: 100%;" Name="Zip" />
+                                                <RadzenTextBox Style="width: 100%;" Name="Logradouro" @bind-Value=@Paciente.Logradouro class="w-100" />
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        <RadzenRow AlignItems="AlignItems.Center">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenLabel Text="Número" Component="Numero" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="8">
+                                                <RadzenTextBox Style="width: 100%;" Name="Numero" @bind-Value=@Paciente.NumeroLogradouro class="w-100" />
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        <RadzenRow AlignItems="AlignItems.Center">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenLabel Text="Complemento" Component="Complemento" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="8">
+                                                <RadzenTextBox Style="width: 100%;" Name="Complemento" @bind-Value=@Paciente.Complemento class="w-100" />
                                             </RadzenColumn>
                                         </RadzenRow>
                                     </RadzenStack>
+                                </RadzenTabsItem>
+                                <RadzenTabsItem Text="Informações Financeiras">
+                                       <RadzenStack>
+                                        <RadzenRow AlignItems="AlignItems.Center">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenLabel Text="Tipo de Pagamento" Component="TipoPagamento" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="8">
+                                                <RadzenDropDown @bind-Value="Paciente.TipoPagamento" Placeholder="Mensal" Data="@tipoPagamentos" Style="width: 100%;" TextProperty="Nome" ValueProperty="Id" Name="TipoPagamento">
+                                                </RadzenDropDown>
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        <RadzenRow AlignItems="AlignItems.Center">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenLabel Text="Valor da Sessão" Component="ValorSessao" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="8">
+                                                <RadzenNumeric Format="c" ShowUpDown="false" @bind-Value="Paciente.ValorSessao" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" />
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        <RadzenRow AlignItems="AlignItems.Center">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenLabel Text="Dia de Vencimento" Component="DiaVencimento" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="8">
+                                                <RadzenNumeric ShowUpDown="false" TValue="int?" @bind-Value="Paciente.DiaVencimento" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" />
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        <RadzenRow AlignItems="AlignItems.Center">
+                                            <RadzenColumn Size="12" SizeMD="4">
+                                                <RadzenLabel Text="Ativo" Component="Ativo" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="8">
+                                                <RadzenRadioButtonList @bind-Value="Paciente.Ativo">
+                                                    <Items>
+                                                        <RadzenRadioButtonListItem Text="Ativo" Value="1" />
+                                                        <RadzenRadioButtonListItem Text="Inativo" Value="2" />
+                                                    </Items>
+                                                </RadzenRadioButtonList>
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                      </RadzenStack>
                                 </RadzenTabsItem>
                             </Tabs>
                         </RadzenTabs>
@@ -110,7 +220,7 @@
     Variant variant = Variant.Filled;
     AlertSize size = AlertSize.Medium;
     AlertStyle alertStyle = AlertStyle.Primary;
-
+    double value = 0.0;
 
     [Inject]
     private NavigationManager? navigation { get; set; }
@@ -123,6 +233,7 @@
 
     [Parameter]
     public EventCallback OnValidSubmit { get; set; }
+
 
     [Parameter]
     public string ButtonTextSubmit { get; set; } = "Salvar";
@@ -163,10 +274,50 @@
         public string CardNr { get; set; }
     }
 
-    public class Country
+    public class Pais
     {
         public int Id { get; set; }
-        public string Name { get; set; }
+        public string Nome { get; set; }
+    }
+
+    public class TipoPagamento
+    {
+        public int Id { get; set; }
+        public string Nome { get; set; }
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        Paciente.Sexo = 1;
+        Paciente.Ativo = 1;
+        Paciente.Pais = 1;
+        Paciente.TipoPagamento = 1;
+
+    }
+
+    async Task OnChange(string value, string name)
+    {
+        try
+        {
+            if (!String.IsNullOrEmpty(value))
+            {
+                var enderecoDTO = await _pacienteService.BuscaCEP(value);
+
+                if (enderecoDTO != null)
+                {
+                    Paciente.Cidade = enderecoDTO.Cidade;
+                    Paciente.Logradouro = enderecoDTO.Logradouro;
+                    Paciente.Bairro = enderecoDTO.Bairro;
+                    Paciente.Estado = enderecoDTO.Estado;
+                }
+            }
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 
     Order order = new Order()
@@ -177,15 +328,22 @@
         };
 
     List<CreditCard> cards = new List<CreditCard>()
-{
+    {
         new CreditCard() { CardId = 1, CardNr = "5555555555554444" },
         new CreditCard() { CardId = 2, CardNr = "4012888888881881" }
     };
 
-    List<Country> countries = new List<Country>()
-{
-        new Country() { Id = 1, Name = "USA" },
-        new Country() { Id = 2, Name = "Germany" }
+    List<Pais> paises = new List<Pais>()
+    {
+        new Pais() { Id = 1, Nome = "Brasil" },
+        new Pais() { Id = 2, Nome = "Espanha" }
+    };
+
+    List<TipoPagamento> tipoPagamentos = new List<TipoPagamento>()
+    {
+        new TipoPagamento() { Id = 1, Nome = "Mensal" },
+        new TipoPagamento() { Id = 2, Nome = "Avulso" },
+        new TipoPagamento() { Id = 3, Nome = "Gratuito" }
     };
    
 }

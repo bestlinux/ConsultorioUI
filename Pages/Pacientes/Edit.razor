@@ -1,0 +1,26 @@
+﻿@page "/paciente/edit/{pacienteId:int}"
+@inject IPacienteService _pacienteService
+@inject NavigationManager navigation
+
+<PacienteForm Paciente="@paciente" OnValidSubmit="EditarPaciente"
+           ButtonTextCancelar="Cancelar" ButtonTextSubmit="Salvar">
+</PacienteForm>
+
+@code {
+
+    private PacienteDTO paciente = new PacienteDTO();
+
+    [Parameter]
+    public int pacienteId { get; set; }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        paciente = await _pacienteService.GetPaciente(pacienteId);
+    }
+
+    async Task EditarPaciente()
+    {
+        await _pacienteService.UpdatePaciente(paciente);
+        navigation.NavigateTo("pacientes");
+    }
+}
