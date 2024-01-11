@@ -1,7 +1,6 @@
 ﻿@page "/pacientes"
 @inject IPacienteService _pacienteService
 @inject NavigationManager NavigationManager
-@inject NavigationManager navigation
 @inject DialogService DialogService
 
 <h3>Pacientes</h3>
@@ -162,7 +161,7 @@
     {
         try
         {
-            navigation.NavigateTo("/paciente/create");
+            NavigationManager.NavigateTo("/paciente/create");
         }
         catch (Exception)
         {

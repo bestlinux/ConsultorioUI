@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace ConsultorioUI.Models.DTOs
+namespace ConsultorioUI.Models
 {
     public class ErrorItem
     {

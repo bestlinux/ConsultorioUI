@@ -1,0 +1,151 @@
+﻿@page "/pagamentos"
+@inject IPacienteService _pacienteService
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+<h3>Pagamentos</h3>
+
+<div>
+    <RadzenButton Click=@(args => OnClick()) ButtonStyle="ButtonStyle.Secondary" Icon="add_circle_outline" class="mt-2 mb-4" Text="Adicionar Novo Pagamento" />
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-4 mb-4">
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3">1. Pacientes</RadzenText>
+                <RadzenDropDown Style="width:300px" TValue="int" @bind-Value="PacienteID" Placeholder="Selecione..." AllowFiltering="true"
+                                Data="@(pacientes)" TextProperty="Nome" ValueProperty="Id" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})"
+                                 />
+            </RadzenCard>
+        </div>       
+        <div class="col-xl-3 mb-4">
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3">2. Ano</RadzenText>
+                    <RadzenNumeric @bind-Value="@Ano" />   
+            </RadzenCard>
+        </div>
+        <div class="col-xl-3 mb-4">
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3">3. Mês</RadzenText>
+                <RadzenDropDown TValue="int" @bind-Value="MesID" Placeholder="Selecione..." AllowFiltering="true" Data="@meses" Style="width: 100%;" TextProperty="Nome" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})"  ValueProperty="Id" Name="Nome" Change=@(args => OnChange(MesID))>
+                </RadzenDropDown>
+            </RadzenCard>
+        </div>
+        <div class="col-12 mb-4">
+           <!-- <RadzenCard>
+                <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3">Order Details</RadzenText>
+                <RadzenDataGrid AllowFiltering="true" FilterPopupRenderMode="PopupRenderMode.OnDemand" AllowPaging="true" AllowSorting="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                Data="@(orderDetails)" TItem="OrderDetail" ColumnWidth="200px">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="OrderDetail" Property="Product.ProductName" Title="Product" />
+                        <RadzenDataGridColumn TItem="OrderDetail" Property="Quantity" Title="Quantity" />
+                        <RadzenDataGridColumn TItem="OrderDetail" Property="Discount" Title="Discount" FormatString="{0:P}" />
+                    </Columns>
+                </RadzenDataGrid>
+             </RadzenCard>-->
+        </div>
+    </div>
+</div>
+
+@code {
+    Variant variant = Variant.Outlined;
+
+    IEnumerable<PacienteDTO> pacientes;
+
+    public int PacienteID { get; set; }
+
+    public int MesID { get; set; }
+
+    public int Ano = 2024;
+
+    [Parameter]
+    public PacienteDTO? Paciente { get; set; }
+
+    [Parameter]
+    public Mes? MesSelected { get; set; }
+
+    public string? MensagemErro { get; set; }
+
+    private string? errorMessage = "Não foi possível acessar os Pacientes";
+
+    public class Mes
+    {
+        public int Id { get; set; }
+        public string? Nome { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        try
+        {
+            await CarregarPacientes();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            NavigationManager.NavigateTo("notauthorized");
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os pacientes : {ex.Message}";
+        }
+    }
+
+    void OnClick()
+    {
+        try
+        {
+            NavigationManager.NavigateTo("/pagamentos/create");
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    async Task CarregarPacientes()
+    {
+        try
+        {
+            pacientes = await _pacienteService.GetPacientes();
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os pacientes : {ex.Message}";
+        }
+    }
+
+    async Task OnChange(int value)
+    {
+        if (PacienteID == 0)
+            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Aviso", Detail = "Por favor, selecione um paciente", Duration = 4000 });
+
+        if (Ano.ToString().Length != 4)
+            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Aviso", Detail = "Por favor, informe um ano valido", Duration = 4000 });
+
+    }
+
+    void ShowNotification(NotificationMessage message)
+    {
+        NotificationService.Notify(message);
+
+        //console.Log($"{message.Severity} notification");
+    }
+
+    List<Mes> meses = new List<Mes>()
+    {
+        new Mes() { Id = 1, Nome = "Janeiro" },
+        new Mes() { Id = 2, Nome = "Fevereiro" },
+        new Mes() { Id = 3, Nome = "Março" },
+        new Mes() { Id = 4, Nome = "Abril" },
+        new Mes() { Id = 5, Nome = "Maio" },
+        new Mes() { Id = 6, Nome = "Junho" },
+        new Mes() { Id = 7, Nome = "Julho" },
+        new Mes() { Id = 8, Nome = "Agosto" },
+        new Mes() { Id = 9, Nome = "Setembro" },
+        new Mes() { Id = 10, Nome = "Outubro" },
+        new Mes() { Id = 11, Nome = "Novembro" },
+        new Mes() { Id = 12, Nome = "Dezembro" }
+    };
+}
