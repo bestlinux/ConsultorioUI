@@ -44,7 +44,7 @@ namespace ConsultorioUI.Models.DTOs
 
         public int? StatusPagamento { get; set; }
 
-        public int? Ativo { get; set; }
+        public int Ativo { get; set; }
         /*[Required(ErrorMessage = "O campo Cidade é obrigatório")]
         public string Cidade { get; set; }*/
 

@@ -87,6 +87,7 @@
                                             </RadzenColumn>
                                             <RadzenColumn Size="12" SizeMD="8">
                                                 <RadzenMask Mask="*****-***" CharacterPattern="[0-9]" Placeholder="00000-000" Name="EP" @bind-Value=@Paciente.CEP Style="width: 40%;" aria-label="CEP" Change=@(args => OnChange(args, "TextBox with placeholder")) />
+                                                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Visible="@isLoading"/>
                                             </RadzenColumn>
                                         </RadzenRow>
                                         <RadzenRow AlignItems="AlignItems.Center">
@@ -221,6 +222,7 @@
     AlertSize size = AlertSize.Medium;
     AlertStyle alertStyle = AlertStyle.Primary;
     double value = 0.0;
+    bool isLoading = false;
 
     [Inject]
     private NavigationManager? navigation { get; set; }
@@ -303,7 +305,9 @@
         {
             if (!String.IsNullOrEmpty(value))
             {
+                isLoading = true;
                 var enderecoDTO = await _pacienteService.BuscaCEP(value);
+                isLoading = false;
 
                 if (enderecoDTO != null)
                 {
@@ -312,6 +316,7 @@
                     Paciente.Bairro = enderecoDTO.Bairro;
                     Paciente.Estado = enderecoDTO.Estado;
                 }
+
             }
         }
         catch (Exception)

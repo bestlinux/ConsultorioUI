@@ -60,7 +60,7 @@ namespace ConsultorioUI.Services.Api
 
             var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
 
-            StringContent content = new StringContent(JsonSerializer.Serialize(pacienteDTO),
+            StringContent content = new(JsonSerializer.Serialize(pacienteDTO),
                                                       Encoding.UTF8, "application/json");
 
             using (var response = await httpClient.PostAsync(apiEndpoint, content))

@@ -6,18 +6,9 @@
 <PacienteForm Paciente="@paciente" OnValidSubmit="CriarPaciente"
               ButtonTextCancelar="Cancelar"
               ButtonTextSubmit="Salvar" />
-<div class="rz-m-12">
-    <RadzenProgressBar Value="100" ProgressBarStyle="ProgressBarStyle.Light" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Visible=@busy />
-</div>
-<!--@if (MensagemErro is not null)
-{
-    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
-        @MensagemErro
-    </RadzenAlert>
-}-->
+
 @code {
     private PacienteDTO paciente = new PacienteDTO();
-    private bool busy = false;
     public string? MensagemErro { get; set; }
 
     async Task ShowBusyDialog(bool withMessageAsString)
@@ -104,13 +95,10 @@
     {
         try
         {
-            //busy = true;
-            await ShowBusyDialog(false);
-           
+            await ShowBusyDialog(false);           
         }
         catch (Exception ex)
         {
-            //busy = false;
             MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
         }
     }

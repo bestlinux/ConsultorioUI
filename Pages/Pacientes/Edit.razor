@@ -1,17 +1,99 @@
 ﻿@page "/paciente/edit/{pacienteId:int}"
 @inject IPacienteService _pacienteService
 @inject NavigationManager navigation
+@inject DialogService DialogService
 
 <PacienteForm Paciente="@paciente" OnValidSubmit="EditarPaciente"
-           ButtonTextCancelar="Cancelar" ButtonTextSubmit="Salvar">
+              ButtonTextCancelar="Cancelar" ButtonTextSubmit="Salvar">
 </PacienteForm>
 
 @code {
 
     private PacienteDTO paciente = new PacienteDTO();
+    public string? MensagemErro { get; set; }
 
     [Parameter]
     public int pacienteId { get; set; }
+
+    async Task ShowBusyDialog(bool withMessageAsString)
+    {
+        try
+        {
+            InvokeAsync(async () =>
+        {
+            //await Task.Delay(2000);
+            try
+            {
+                // Simulate background task
+                await _pacienteService.UpdatePaciente(paciente);
+                //busy = false;
+
+                // Close the dialog
+                DialogService.Close();
+
+                navigation.NavigateTo("pacientes");
+            }
+            catch (Exception ex)
+            {
+                MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+                DialogService.Close();
+                //DialogService.Alert(MensagemErro, "ERRO", new AlertOptions() { OkButtonText = "Fechar" });
+                await DialogService.OpenAsync("ERRO", ds =>
+    @<div>
+        @MensagemErro
+    </div>, new DialogOptions()
+          {
+              Style = "color:red"
+          });
+            }
+        });
+
+            if (withMessageAsString)
+            {
+                await BusyDialog("Busy ...");
+            }
+            else
+            {
+                await BusyDialog();
+            }
+        }
+        catch (Exception ex)
+        {
+            DialogService.Close();
+            MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+        }
+    }
+    // Busy dialog from markup
+    async Task BusyDialog()
+    {
+        await DialogService.OpenAsync("", ds =>
+    @<RadzenStack AlignItems="AlignItems.Center" Gap="2rem" Class="rz-p-12">
+        <RadzenImage Path="images/community.svg" Style="width: 200px;" AlternateText="community" />
+        <RadzenText TextStyle="TextStyle.H6">Por favor, aguarde...</RadzenText>
+    </RadzenStack>
+    , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
+
+    // Busy dialog from string
+    async Task BusyDialog(string message)
+    {
+        await DialogService.OpenAsync("", ds =>
+        {
+            RenderFragment content = b =>
+            {
+                b.OpenElement(0, "RadzenRow");
+
+                b.OpenElement(1, "RadzenColumn");
+                b.AddAttribute(2, "Size", "12");
+
+                b.AddContent(3, message);
+
+                b.CloseElement();
+                b.CloseElement();
+            };
+            return content;
+        }, new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
 
     protected async override Task OnParametersSetAsync()
     {
@@ -20,7 +102,13 @@
 
     async Task EditarPaciente()
     {
-        await _pacienteService.UpdatePaciente(paciente);
-        navigation.NavigateTo("pacientes");
+        try
+        {
+            await ShowBusyDialog(false);
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+        }      
     }
 }
