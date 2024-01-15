@@ -29,5 +29,6 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 //SERVICOS NEGOCIO
 builder.Services.AddScoped<IPacienteService, PacienteService>();
+builder.Services.AddScoped<IPagamentoService, PagamentoService>();
 
 await builder.Build().RunAsync();
