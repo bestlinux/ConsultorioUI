@@ -20,8 +20,6 @@ namespace ConsultorioUI.Services.Api
         private readonly JsonSerializerOptions _options;
 
         private PacienteDTO? paciente;
-        private List<PacienteDTO>? pacientes;
-
         public PacienteService(IHttpClientFactory httpClientFactory,
         ILogger<PacienteService> logger)
         {
@@ -75,7 +73,7 @@ namespace ConsultorioUI.Services.Api
                 else if (response.StatusCode == HttpStatusCode.BadRequest)
                 {
                     var message = await response.Content.ReadAsStringAsync();
-                    _logger.LogError($"Erro ao salvar o paciente pelo cep= {pacienteDTO.Nome} - {message}");
+                    _logger.LogError($"Erro ao salvar o paciente pelo nome= {pacienteDTO.Nome} - {message}");
                     throw new Exception($"Status Code : {response.StatusCode} - {message}");
                 }
                 else if (response.StatusCode == HttpStatusCode.Unauthorized)

@@ -33,9 +33,9 @@ namespace ConsultorioUI.Models.DTOs
 
         public string? Complemento { get; set; }
 
-        //MENSAL
-        //AVULSO
-        //GRATUITO
+        //1 - MENSAL
+        //2 - AVULSO
+        //3 - GRATUITO
         public int? TipoPagamento { get; set; }
 
         public double? ValorSessao { get; set; }
@@ -44,6 +44,8 @@ namespace ConsultorioUI.Models.DTOs
 
         public int? StatusPagamento { get; set; }
 
+        //1 - ATIVO
+        //2 - INATIVO
         public int Ativo { get; set; }
         /*[Required(ErrorMessage = "O campo Cidade é obrigatório")]
         public string Cidade { get; set; }*/

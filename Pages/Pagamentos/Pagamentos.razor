@@ -4,8 +4,19 @@
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 @inject DialogService DialogService
-<h3>Pagamentos</h3>
 
+<h3>Pagamentos</h3>
+<style>
+    .rz-grid-table {
+        width: unset;
+    }
+</style>
+@if (MensagemErro is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        @MensagemErro
+    </RadzenAlert>
+}
 <div>
     <RadzenButton Click=@(args => ShowInlineDialog()) ButtonStyle="ButtonStyle.Secondary" Icon="add_circle_outline" class="mt-2 mb-4" Text="Adicionar Novo Pagamento" />
 </div>
@@ -16,40 +27,155 @@
             <RadzenCard>
                 <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3">1. Pacientes</RadzenText>
                 <RadzenDropDown Style="width:300px" TValue="int" @bind-Value="PacienteID" Placeholder="Selecione..." AllowFiltering="true"
-                                Data="@(pacientes)" TextProperty="Nome" ValueProperty="Id" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})"
-                                 />
+                                Data="@(pacientes)" TextProperty="Nome" ValueProperty="Id" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})" />
             </RadzenCard>
-        </div>       
+        </div>
         <div class="col-xl-3 mb-4">
             <RadzenCard>
                 <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3">2. Ano</RadzenText>
-                    <RadzenNumeric @bind-Value="@Ano" />   
+                <RadzenNumeric @bind-Value="@Ano" />
             </RadzenCard>
         </div>
         <div class="col-xl-3 mb-4">
             <RadzenCard>
                 <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3">3. Mês</RadzenText>
-                <RadzenDropDown TValue="int" @bind-Value="MesID" Placeholder="Selecione..." AllowFiltering="true" Data="@meses" Style="width: 100%;" TextProperty="Nome" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})"  ValueProperty="Id" Name="Nome" Change=@(args => OnChange(MesID))>
+                <RadzenDropDown TValue="int" @bind-Value="MesID" Placeholder="Selecione..." AllowFiltering="true" Data="@meses" Style="width: 100%;" TextProperty="Nome" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})" ValueProperty="Id" Name="Nome" Change=@(args => OnChange(MesID))>
                 </RadzenDropDown>
             </RadzenCard>
         </div>
+        <div class="col-xl-3 mb-4">
+                <RadzenButton Shade="Shade.Lighter" Click=@(args => OnClick()) Text="Todos" ButtonStyle="ButtonStyle.Primary" />
+        </div>
         <div class="col-12 mb-4">
-           <!-- <RadzenCard>
-                <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3">Order Details</RadzenText>
-                <RadzenDataGrid AllowFiltering="true" FilterPopupRenderMode="PopupRenderMode.OnDemand" AllowPaging="true" AllowSorting="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                                Data="@(orderDetails)" TItem="OrderDetail" ColumnWidth="200px">
-                    <Columns>
-                        <RadzenDataGridColumn TItem="OrderDetail" Property="Product.ProductName" Title="Product" />
-                        <RadzenDataGridColumn TItem="OrderDetail" Property="Quantity" Title="Quantity" />
-                        <RadzenDataGridColumn TItem="OrderDetail" Property="Discount" Title="Discount" FormatString="{0:P}" />
-                    </Columns>
-                </RadzenDataGrid>
-             </RadzenCard>-->
+            <RadzenDataGrid @ref="pagamentosGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="10" AllowSorting="true" EditMode="DataGridEditMode.Single" IsLoading=@isLoading
+                            Data="@pagamentos" TItem="PagamentoDTO" RowUpdate="@OnUpdateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+                <Columns>
+                    <RadzenDataGridColumn TItem="PagamentoDTO" Property="Paciente" Title="Paciente" Width="200px" Frozen="true">
+                        <Template Context="pagamento">
+                            @String.Format("{0:d}", pagamento.Paciente.Nome)
+                        </Template>
+                    </RadzenDataGridColumn>     
+                    <RadzenDataGridColumn TItem="PagamentoDTO" Property="TipoPagamento" Title="Tipo Pagamento" Width="200px">
+                        <Template Context="pagamento">
+                            @if (pagamento.TipoPagamento == 1)
+                            {
+                                <span style='color: var(--rz-success-dark)'>@String.Format("{0:d}", "Total")</span>
+                            }
+                            else
+                            {
+                                <span style='color: var(--rz-danger-dark)'>@String.Format("{0:d}", "Parcial")</span>
+                            }                           
+                        </Template>
+                        <EditTemplate Context="pagamento">
+                            <RadzenRadioButtonList @bind-Value="pagamento.TipoPagamento">
+                                <Items>
+                                    <RadzenRadioButtonListItem Text="Total" Value="1" />
+                                    <RadzenRadioButtonListItem Text="Parcial" Value="2" />
+                                </Items>
+                            </RadzenRadioButtonList>
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="PagamentoDTO" Property="Valor" Title="Valor" Width="200px">
+                        <Template Context="pagamento">
+                            @String.Format("{0:c}", pagamento.Valor)
+                        </Template>
+                        <EditTemplate Context="pagamento">
+                            <RadzenNumeric Format="c" ShowUpDown="false" @bind-Value="pagamento.Valor" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" />
+                        </EditTemplate> 
+                        <FooterTemplate>
+                            Total pago: <b>@String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C}", pagamentos.Sum(o => o.Valor))</b>
+                        </FooterTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="PagamentoDTO" Property="Mes" Title="Mes" Width="200px">
+                        <Template Context="pagamento">
+                            @switch (pagamento.Mes)
+                            {
+                                case 1:
+                                    <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Janeiro")</span>
+                                    break;
+                                case 2:
+                                    <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Fevereiro")</span>
+                                    break;
+                                case 3:
+                                    <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Março")</span>
+                                    break;
+                                case 4:
+                                    <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Abril")</span>
+                                    break;
+                                case 5:
+                                    <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Maio")</span>
+                                    break;
+                                case 6:
+                                    <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Junho")</span>
+                                    break;
+                                case 7:
+                                    <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Julho")</span>
+                                    break;
+                                case 8:
+                                    <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Agosto")</span>
+                                    break;
+                                case 9:
+                                    <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Setembro")</span>
+                                    break;
+                                case 10:
+                                    <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Outubro")</span>
+                                    break;
+                                case 11:
+                                    <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Novembro")</span>
+                                    break;
+                                case 12:
+                                    <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Dezembro")</span>
+                                    break;
+                            }                           
+                        </Template>
+                        <EditTemplate Context="pagamento">
+                            <RadzenDropDown @bind-Value="pagamento.Mes" Placeholder="Selecione..." AllowFiltering="true" Data="@meses" Style="width: 100%;" TextProperty="Nome" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})" ValueProperty="Id" Name="Nome">
+                            </RadzenDropDown>
+                        </EditTemplate> 
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="PagamentoDTO" Property="Ano" Title="Ano" Width="200px">
+                        <Template Context="pagamento">
+                            @String.Format("{0:d}", pagamento.Ano)
+                        </Template>
+                        <EditTemplate Context="pagamento">
+                            <RadzenNumeric @bind-Value="@pagamento.Ano" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="PagamentoDTO" Property="Observacao" Title="Observação" Width="200px">
+                        <Template Context="pagamento">
+                            @String.Format("{0:d}", pagamento.Observacao)
+                        </Template>
+                        <EditTemplate Context="pagamento">
+                            <RadzenTextBox Style="width: 100%;" Name="Nome" @bind-Value="@pagamento.Observacao" class="w-100" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="PagamentoDTO" Context="order" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
+                        <Template Context="pagamento">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(pagamento))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1"
+                                          Click="@(args => ConfirmDelete(pagamento))" @onclick:stopPropagation="true" />
+                        </Template>
+                        <EditTemplate Context="pagamento">
+                            <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(pagamento))">
+                            </RadzenButton>
+                            <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(pagamento))">
+                            </RadzenButton>
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
         </div>
     </div>
 </div>
 
 @code {
+
+    RadzenDataGrid<PagamentoDTO> pagamentosGrid;
+    bool isLoading = false;
+    PagamentoDTO pagamentoToInsert;
+    PagamentoDTO pagamentoToUpdate;
+    IEnumerable<PagamentoDTO> pagamentos = new List<PagamentoDTO>();
 
     public PagamentoDTO? Pagamento = new PagamentoDTO();
 
@@ -58,6 +184,12 @@
     IEnumerable<PacienteDTO> pacientes;
 
     public int PacienteID { get; set; }
+
+    public int PacienteIDPagamento { get; set; }
+
+    public int MesIDPagamento { get; set; }
+
+    public int AnoPagamento = 2024;
 
     public int MesID { get; set; }
 
@@ -82,13 +214,123 @@
         public string? Nome { get; set; }
     }
 
+    async Task EditRow(PagamentoDTO pagamento)
+    {
+        pagamentoToUpdate = pagamento;
+        await pagamentosGrid.EditRow(pagamento);
+    }
+
+    async Task SaveRow(PagamentoDTO order)
+    {
+        await pagamentosGrid.UpdateRow(order);
+    }
+
+    void CancelEdit(PagamentoDTO order)
+    {
+        Reset();
+
+        pagamentosGrid.CancelEditRow(order);
+    }
+
+    async Task OnUpdateRow(PagamentoDTO pagamento)
+    {
+        Reset();
+
+        try
+        {
+            await _pagamentoService.UpdatePagamento(pagamento);
+            MensagemErro = null;
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao atualizar o pagamento : {ex.Message}";
+        }
+    }
+
+    public async Task ConfirmDelete(PagamentoDTO pagamento)
+    {
+        var confirmationResult = await this.DialogService.Confirm("Você deseja excluir o pagamento ?", "Pagamentos", new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
+        if (confirmationResult == true)
+        {
+            Reset();
+
+            if (pagamentos.Contains(pagamento))
+            {
+                bool result = await _pagamentoService.DeletePagamento(pagamento.Id);
+
+                if (result)
+                {
+                    if (MesID != 0)
+                    {
+                        await CarregaPagamentosPorPacienteMesAno(PacienteID, MesID, Ano);
+                    }
+                    else
+                    {
+                        await CarregarPagamentos();
+                    }
+                    await pagamentosGrid.Reload();
+                }
+            }
+            else
+            {
+                pagamentosGrid.CancelEditRow(pagamento);
+                await pagamentosGrid.Reload();
+            }
+        }
+    }
+    async Task CarregaPagamentosPorPacienteMesAno(int PacienteId, int MesId, int Ano)
+    {
+        try 
+        {
+            pagamentos = await _pagamentoService.GetPagamentosByPacienteMesAno(PacienteID, MesId, Ano);
+        }
+        catch (Exception e)
+        {
+            MensagemErro = $"Erro ao carregar os pacientes : {e.Message}";
+        }
+    }
+
+    async Task CarregarPagamentos()
+    {
+        try
+        {
+            pagamentos = await _pagamentoService.GetPagamentos();
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os pacientes : {ex.Message}";
+        }
+    }
+
+    async Task DeleteRow(PagamentoDTO pagamento)
+    {
+        Reset();
+
+        if (pagamentos.Contains(pagamento))
+        {
+            bool result = await _pagamentoService.DeletePagamento(pagamento.Id);
+
+            if (result)
+            {
+                await CarregarPagamentos();
+                await pagamentosGrid.Reload();
+            }
+        }
+        else
+        {
+            pagamentosGrid.CancelEditRow(pagamento);
+            await pagamentosGrid.Reload();
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
+        await base.OnInitializedAsync();       
 
         try
         {
             await CarregarPacientes();
+            await CarregarPagamentos();
         }
         catch (UnauthorizedAccessException)
         {
@@ -104,44 +346,101 @@
     {
         try
         {
+            Reset();
+            Pagamento.TipoPagamento = 1;
             var result = await DialogService.OpenAsync("Novo Pagamento", ds =>
-            @<RadzenTemplateForm Data="@Pagamento" TItem=PagamentoDTO Submit=@OnValidSubmit>
-            <RadzenRow Gap="2rem" Class="rz-p-0 rz-p-lg-4">
-                <RadzenColumn Size="12" SizeMD="12">
-                    <RadzenStack>
-                         <RadzenFieldset Text="Informações do Pagamento">
-                              <RadzenStack Gap="1rem">
-                                 <RadzenRow AlignItems="AlignItems.Center">
-                                    <RadzenColumn Size="12" SizeMD="4">
-                                        <RadzenLabel Text="Valor" Component="Valor" />
-                                    </RadzenColumn>
-                                    <RadzenColumn Size="12" SizeMD="8">
-                                        <RadzenNumeric Format="c" ShowUpDown="false" @bind-Value="Pagamento.Valor" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" />
-                                    </RadzenColumn>
-                                 </RadzenRow>
-                                </RadzenStack>
-                            </RadzenFieldset>
+        @<RadzenTemplateForm Data="@Pagamento" TItem=PagamentoDTO Submit=@OnValidSubmit>
+        <RadzenRow Gap="2rem" Class="rz-p-0 rz-p-lg-4">
+            <RadzenColumn Size="12" SizeMD="12">
+                <RadzenStack>
+                    <RadzenFieldset Text="Informações do Pagamento">
+                        <RadzenStack Gap="1rem">
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenLabel Text="Paciente" Component="Paciente" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenDropDown Style="width:300px" TValue="int" @bind-Value="PacienteIDPagamento" Placeholder="Selecione..." AllowFiltering="true"
+                                                    Data="@(pacientes)" TextProperty="Nome" ValueProperty="Id" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})" />
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenLabel Text="Tipo Pagamento" Component="TipoPagamento" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenRadioButtonList @bind-Value="Pagamento.TipoPagamento">
+                                        <Items>
+                                            <RadzenRadioButtonListItem Text="Total" Value="1" />
+                                            <RadzenRadioButtonListItem Text="Parcial" Value="2" />
+                                        </Items>
+                                    </RadzenRadioButtonList>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenLabel Text="Mês" Component="Mes" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenDropDown TValue="int" @bind-Value="MesIDPagamento" Placeholder="Selecione..." AllowFiltering="true" Data="@meses" Style="width: 100%;" TextProperty="Nome" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})" ValueProperty="Id" Name="Nome">
+                                    </RadzenDropDown>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenLabel Text="Ano" Component="Ano" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenNumeric @bind-Value="@AnoPagamento" />
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenLabel Text="Valor" Component="Valor" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenNumeric Format="c" ShowUpDown="false" @bind-Value="Pagamento.Valor" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" />
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenRow AlignItems="AlignItems.Center">
+                                <RadzenColumn Size="12" SizeMD="4">
+                                    <RadzenLabel Text="Observação" Component="Observacao" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenTextBox Style="width: 100%;" Name="Nome" @bind-Value="@Pagamento.Observacao" class="w-100" />
+                                </RadzenColumn>
+                            </RadzenRow>
                         </RadzenStack>
-                    </RadzenColumn>
-                </RadzenRow>
-                <RadzenStack Gap="1.5rem">
-                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-                        <RadzenStack Orientation="Orientation.Horizontal">
-                        <RadzenButton Text="Ok" Click="@(args => CreatePagamento(Pagamento, ds))" Style="width: 80px;" />
-                        <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" />
-                        </RadzenStack>
-                    </RadzenStack>
+                    </RadzenFieldset>
                 </RadzenStack>
-              </RadzenTemplateForm>
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenStack Gap="1.5rem">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenStack Orientation="Orientation.Horizontal">
+                    <RadzenButton Text="Ok" Click="@(args => CriarPagamento(Pagamento, ds))" Style="width: 80px;" />
+                    <RadzenButton Text="Cancel" Click="@(args => Cancelar(ds))" ButtonStyle="ButtonStyle.Light" />
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenTemplateForm>
     );
-
-            //NavigationManager.NavigateTo("/pagamentos/create");
-            //Click = "@(args => EditRow(order))"
         }
         catch (Exception)
         {
             throw;
         }
+    }
+
+    void Cancelar(DialogService ds)
+    {
+        Reset();
+        ds.Close();
+    }
+
+    async Task OnClick()
+    {
+        await CarregarPagamentos();
     }
 
     async Task CarregarPacientes()
@@ -158,13 +457,29 @@
 
     void Reset()
     {
+        pagamentoToInsert = null;
+        pagamentoToUpdate = null;
+        PacienteIDPagamento = -1;
+        MesIDPagamento = -1;
         Pagamento = new PagamentoDTO();
     }
 
-    async Task CreatePagamento(PagamentoDTO pagamento, DialogService ds)
+    async Task CriarPagamento(PagamentoDTO pagamento, DialogService ds)
     {
-        Reset();
-        ds.Close();
+        try
+        {
+            pagamento.Ano = AnoPagamento;
+            pagamento.Mes = MesIDPagamento;
+            pagamento.PacienteId = PacienteIDPagamento;
+
+            await ShowBusyDialog(false, ds);
+
+            await CarregarPagamentos();
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+        }
     }
 
     async Task OnChange(int value)
@@ -175,6 +490,8 @@
         if (Ano.ToString().Length != 4)
             ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Aviso", Detail = "Por favor, informe um ano valido", Duration = 4000 });
 
+        //pagamentos = await _pagamentoService.GetPagamentosByPacienteMesAno(PacienteID, value, Ano);
+        await CarregaPagamentosPorPacienteMesAno(PacienteID, value, Ano);
     }
 
     void ShowNotification(NotificationMessage message)
@@ -185,7 +502,7 @@
     }
 
     List<Mes> meses = new List<Mes>()
-    {
+                {
         new Mes() { Id = 1, Nome = "Janeiro" },
         new Mes() { Id = 2, Nome = "Fevereiro" },
         new Mes() { Id = 3, Nome = "Março" },
@@ -198,5 +515,84 @@
         new Mes() { Id = 10, Nome = "Outubro" },
         new Mes() { Id = 11, Nome = "Novembro" },
         new Mes() { Id = 12, Nome = "Dezembro" }
-    };
+                };
+
+    async Task ShowBusyDialog(bool withMessageAsString, DialogService ds)
+    {
+        try
+        {
+            InvokeAsync(async () =>
+            {
+                try
+                {
+                    // Simulate background task
+                    await _pagamentoService.CreatePagamento(Pagamento);
+                    //busy = false;
+
+                    // Close the dialog
+                    DialogService.Close();
+
+                    Reset();
+                    ds.Close();
+                }
+                catch (Exception ex)
+                {
+                    MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+                    DialogService.Close();
+                    //DialogService.Alert(MensagemErro, "ERRO", new AlertOptions() { OkButtonText = "Fechar" });
+                    await DialogService.OpenAsync("ERRO", ds =>
+                    @<div>
+                        @MensagemErro
+                    </div>, new DialogOptions()
+                      {
+                          Style = "color:red"
+                      });
+                }
+                });
+
+                if (withMessageAsString)
+                {
+                    await BusyDialog("Busy ...");
+                }
+                else
+                {
+                    await BusyDialog();
+                }
+        }
+        catch (Exception ex)
+        {
+            DialogService.Close();
+            MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+        }
+    }
+    // Busy dialog from markup
+    async Task BusyDialog()
+    {
+        await DialogService.OpenAsync("", ds =>
+        @<RadzenStack AlignItems="AlignItems.Center" Gap="2rem" Class="rz-p-12">
+            <RadzenImage Path="images/community.svg" Style="width: 200px;" AlternateText="community" />
+            <RadzenText TextStyle="TextStyle.H6">Por favor, aguarde...</RadzenText>
+        </RadzenStack>
+        , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
+
+    async Task BusyDialog(string message)
+    {
+        await DialogService.OpenAsync("", ds =>
+        {
+            RenderFragment content = b =>
+            {
+                b.OpenElement(0, "RadzenRow");
+
+                b.OpenElement(1, "RadzenColumn");
+                b.AddAttribute(2, "Size", "12");
+
+                b.AddContent(3, message);
+
+                b.CloseElement();
+                b.CloseElement();
+            };
+            return content;
+        }, new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
 }
