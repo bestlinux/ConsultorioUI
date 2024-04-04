@@ -54,26 +54,51 @@
                         <Template Context="pagamento">
                             @String.Format("{0:d}", pagamento.Paciente.Nome)
                         </Template>
-                    </RadzenDataGridColumn>     
-                    <RadzenDataGridColumn TItem="PagamentoDTO" Property="TipoPagamento" Title="Tipo Pagamento" Width="200px">
+                    </RadzenDataGridColumn>                   
+                    <RadzenDataGridColumn TItem="PagamentoDTO" Property="StatusPagamento" Title="Status Pagamento" Width="200px">
                         <Template Context="pagamento">
-                            @if (pagamento.TipoPagamento == 1)
+                            @if (pagamento.StatusPagamento == 1)
                             {
-                                <span style='color: var(--rz-success-dark)'>@String.Format("{0:d}", "Total")</span>
+                                <span style='color: var(--rz-success-dark)'>@String.Format("{0:d}", "Pago")</span>
                             }
                             else
                             {
-                                <span style='color: var(--rz-danger-dark)'>@String.Format("{0:d}", "Parcial")</span>
+                                <span style='color: var(--rz-danger-dark)'>@String.Format("{0:d}", "Aberto")</span>
                             }                           
                         </Template>
                         <EditTemplate Context="pagamento">
-                            <RadzenRadioButtonList @bind-Value="pagamento.TipoPagamento">
+                            <RadzenRadioButtonList @bind-Value="pagamento.StatusPagamento">
                                 <Items>
-                                    <RadzenRadioButtonListItem Text="Total" Value="1" />
-                                    <RadzenRadioButtonListItem Text="Parcial" Value="2" />
+                                    <RadzenRadioButtonListItem Text="Pago" Value="1" />
+                                    <RadzenRadioButtonListItem Text="Aberto" Value="2" />
                                 </Items>
                             </RadzenRadioButtonList>
                         </EditTemplate>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="PagamentoDTO" Property="Modalidade" Title="Modalidade" Width="200px">
+                        <Template Context="pagamento">
+                            @if (pagamento.Paciente.TipoPagamento == 1)
+                            {
+                                <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Mensal")</span>
+                            }
+                            else if (pagamento.Paciente.TipoPagamento == 2)
+                            {
+                                <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Avulso")</span>
+                            }
+                            else if (pagamento.Paciente.TipoPagamento == 3)
+                            {
+                                <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Gratuito")</span>
+                            }
+                            else
+                            {
+                                <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Semanal")</span>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="PagamentoDTO" Property="DiaVencimento" Title="Dia Vencimento" Width="200px" Frozen="true">
+                        <Template Context="pagamento">
+                            @String.Format("{0:d}", pagamento.Paciente.DiaVencimento)
+                        </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="PagamentoDTO" Property="Valor" Title="Valor" Width="200px">
                         <Template Context="pagamento">
@@ -323,10 +348,19 @@
         }
     }
 
+    async Task ShowLoading()
+    {
+        isLoading = true;
+
+        await Task.Yield();
+
+        isLoading = false;
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();       
-
+        await ShowLoading();
         try
         {
             await CarregarPacientes();
@@ -347,7 +381,7 @@
         try
         {
             Reset();
-            Pagamento.TipoPagamento = 1;
+            Pagamento.StatusPagamento = 1;
             var result = await DialogService.OpenAsync("Novo Pagamento", ds =>
         @<RadzenTemplateForm Data="@Pagamento" TItem=PagamentoDTO Submit=@OnValidSubmit>
         <RadzenRow Gap="2rem" Class="rz-p-0 rz-p-lg-4">
@@ -366,13 +400,13 @@
                             </RadzenRow>
                             <RadzenRow AlignItems="AlignItems.Center">
                                 <RadzenColumn Size="12" SizeMD="4">
-                                    <RadzenLabel Text="Tipo Pagamento" Component="TipoPagamento" />
+                                    <RadzenLabel Text="Status Pagamento" Component="StatusPagamento" />
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="8">
-                                    <RadzenRadioButtonList @bind-Value="Pagamento.TipoPagamento">
+                                    <RadzenRadioButtonList @bind-Value="Pagamento.StatusPagamento">
                                         <Items>
-                                            <RadzenRadioButtonListItem Text="Total" Value="1" />
-                                            <RadzenRadioButtonListItem Text="Parcial" Value="2" />
+                                            <RadzenRadioButtonListItem Text="Pago" Value="1" />
+                                            <RadzenRadioButtonListItem Text="Aberto" Value="2" />
                                         </Items>
                                     </RadzenRadioButtonList>
                                 </RadzenColumn>

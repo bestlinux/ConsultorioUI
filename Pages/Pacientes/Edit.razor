@@ -4,7 +4,7 @@
 @inject DialogService DialogService
 
 <PacienteForm Paciente="@paciente" OnValidSubmit="EditarPaciente"
-              ButtonTextCancelar="Cancelar" ButtonTextSubmit="Salvar">
+              ButtonTextCancelar="Cancelar" ButtonTextSubmit="Atualizar" TipoPagamentoEdit="@tipoPagamentoEdit">
 </PacienteForm>
 
 @code {
@@ -14,6 +14,8 @@
 
     [Parameter]
     public int pacienteId { get; set; }
+
+    public int tipoPagamentoEdit { get; set; }
 
     async Task ShowBusyDialog(bool withMessageAsString)
     {
@@ -98,7 +100,16 @@
     protected async override Task OnParametersSetAsync()
     {
         paciente = await _pacienteService.GetPaciente(pacienteId);
+
+        if (paciente.TipoPagamento != null)
+            tipoPagamentoEdit = (int) paciente.TipoPagamento;
     }
+
+    /*protected override void OnParametersSet()
+    {       
+        if (paciente.TipoPagamento != null)
+            tipoPagamentoEdit = (int)paciente.TipoPagamento;
+    }*/
 
     async Task EditarPaciente()
     {
@@ -108,7 +119,7 @@
         }
         catch (Exception ex)
         {
-            MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+            MensagemErro = $"Erro ao atualizar o paciente : {ex.Message}";
         }      
     }
 }

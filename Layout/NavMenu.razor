@@ -4,17 +4,19 @@
         <RadzenPanelMenu>
             <RadzenPanelMenuItem Text="Home" Icon="home" Path=""/>
             <RadzenPanelMenuItem Text="Pacientes" Icon="accessibility" Path="pacientes" />
-            <RadzenPanelMenuItem Text="Financeiro" Icon="account_balance" Path="">
-                <RadzenPanelMenuItem Text="Pagamentos" Path="pagamentos" Icon="credit_card"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Pagamentos" Icon="credit_card" Path="pagamentos" />
+            <!--<RadzenPanelMenuItem Text="Financeiro" Icon="account_balance" Path="">
+                <RadzenPanelMenuItem Text="Pagamentos" Icon="credit_card" Path="pagamentos" />
                 <RadzenPanelMenuItem Text="Relatórios" Path="relatorios" Icon="description"></RadzenPanelMenuItem>
-            </RadzenPanelMenuItem>
-            <AuthorizeView>
+            </RadzenPanelMenuItem>-->
+            <RadzenPanelMenuItem Text="Agenda" Icon="date_range" Path="agenda" />
+            <!--<AuthorizeView>
                 <Authorized>
                     <RadzenPanelMenuItem Text="Agenda" Icon="home" Path="pacientes" />
                 </Authorized>
                 <NotAuthorized>
                 </NotAuthorized>
-            </AuthorizeView>
+            </AuthorizeView>-->
             <AuthorizeView>
                 <Authorized>
                     <li class="nav-item px-3">

@@ -1,0 +1,137 @@
+﻿@inject DialogService DialogService
+@inject IAgendaService _agendaService
+
+@if (MensagemErro is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        @MensagemErro
+    </RadzenAlert>
+}
+
+<RadzenTemplateForm TItem="AgendaDTO" Data="@model" Submit=@OnSubmit>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Nome" />
+        </div>
+        <div class="col">
+            <RadzenTextBox @bind-Value="@model.PacienteNome" Name="PacienteNome" Disabled="true" />
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Tipo da Consulta" />
+        </div>
+        <div class="col">
+            <RadzenRadioButtonList @bind-Value="model.TipoConsulta">
+                <Items>
+                    <RadzenRadioButtonListItem Text="Primeiro Atendimento" Value="1" />
+                    <RadzenRadioButtonListItem Text="Online" Value="2" />
+                    <RadzenRadioButtonListItem Text="Presencial" Value="3" />
+                </Items>
+            </RadzenRadioButtonList>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Status da Consulta" />
+        </div>
+        <div class="col">
+            <RadzenRadioButtonList @bind-Value="model.StatusConsulta">
+                <Items>
+                    <RadzenRadioButtonListItem Text="Atendido" Value="1" />
+                    <RadzenRadioButtonListItem Text="Faltou" Value="2" />
+                    <RadzenRadioButtonListItem Text="Desmarcado" Value="3" />
+                    <RadzenRadioButtonListItem Text="Nenhum" Value="0" />
+                </Items>
+            </RadzenRadioButtonList>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Valor da Sessão" />
+        </div>
+        <div class="col">
+            <RadzenNumeric Format="c" ShowUpDown="false" Name="ValorSessao" @bind-Value="model.ValorSessao" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" />
+            <RadzenRequiredValidator Text="Valor da Sessão é obrigatório" Component="ValorSessao" />
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Inicio" />
+        </div>
+        <div class="col">
+            <RadzenDatePicker @bind-Value="@model.InicioSessao" Name="InicioSessao" ShowTime="true" />
+            <RadzenRequiredValidator Text="Start is required" Component="InicioSessao" />
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Fim" />
+        </div>
+        <div class="col">
+            <RadzenDatePicker Name="FimSessao" @bind-Value="@model.FimSessao" ShowTime="true" />
+            <RadzenRequiredValidator Component="FimSessao" Text="End is required" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3"></div>
+        <div class="col">
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Salvar" />
+        </div>
+        <div class="col">
+            <RadzenButton class="form-control-color:red" ButtonStyle="ButtonStyle.Danger" Text="Excluir" Click="@(args => ConfirmDelete(model))" @onclick:stopPropagation="true" />
+        </div>
+    </div>
+</RadzenTemplateForm>
+@code {
+    public string? MensagemErro { get; set; }
+
+    [Parameter]
+    public AgendaDTO Agendamento { get; set; }
+
+    AgendaDTO model = new AgendaDTO();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    protected override void OnParametersSet()
+    {
+        model = Agendamento;
+    }
+    void Reset()
+    {
+        model = new AgendaDTO();
+    }
+
+    public async Task ConfirmDelete(AgendaDTO agenda)
+    {
+        var confirmationResult = await this.DialogService.Confirm("Você deseja excluir o agendamento do paciente " + agenda.PacienteNome + " ?", "Agendamento", new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
+        if (confirmationResult == true)
+        {
+            bool result = await _agendaService.DeleteAgenda(agenda.Id);
+
+            if (result)
+            {
+                Reset();
+                DialogService.Close(model);
+            }
+        }
+    }
+    public async void OnSubmit(AgendaDTO model)
+    {
+        try
+        {
+            await _agendaService.UpdateAgenda(model);
+            Reset();
+            DialogService.Close(model);
+            MensagemErro = null;
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao atualizar o agendamento : {ex.Message}";
+            DialogService.Refresh();
+        }
+    }
+}

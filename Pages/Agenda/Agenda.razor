@@ -1,0 +1,157 @@
+﻿@page "/agenda"
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject IAgendaService _agendaService
+
+<RadzenScheduler @ref=@scheduler SlotRender=@OnSlotRender style="height: 768px;" TItem="AgendaDTO" Data=@appointments StartProperty="InicioSessao" EndProperty="FimSessao"
+                 TextProperty="PacienteNome" SelectedIndex="1"
+                 SlotSelect=@OnSlotSelect AppointmentSelect=@OnAppointmentSelect AppointmentRender=@OnAppointmentRender>
+    <RadzenDayView />
+    <RadzenWeekView />
+    <RadzenMonthView />
+    <RadzenYearView />
+</RadzenScheduler>
+
+@code {
+    RadzenScheduler<AgendaDTO> scheduler;
+    Dictionary<DateTime, string> events = new Dictionary<DateTime, string>();
+    public string? MensagemErro { get; set; }
+    bool isLoading = false;
+
+    IList<AgendaDTO> appointments = new List<AgendaDTO>();
+    /*{
+    new AgendaDTO { InicioSessao = DateTime.Today.AddDays(-2), FimSessao = DateTime.Today.AddDays(-2), PacienteNome = "Birthday" },
+    new AgendaDTO { InicioSessao = DateTime.Today.AddDays(-11), FimSessao = DateTime.Today.AddDays(-10), PacienteNome = "Day off" },
+    new AgendaDTO { InicioSessao = DateTime.Today.AddDays(-10), FimSessao = DateTime.Today.AddDays(-8), PacienteNome = "Work from home" },
+    new AgendaDTO { InicioSessao = DateTime.Today.AddHours(10), FimSessao = DateTime.Today.AddHours(12), PacienteNome = "Online meeting" },
+    new AgendaDTO { InicioSessao = DateTime.Today.AddHours(10), FimSessao = DateTime.Today.AddHours(13), PacienteNome = "Skype call" },
+    new AgendaDTO { InicioSessao = DateTime.Today.AddHours(14), FimSessao = DateTime.Today.AddHours(14).AddMinutes(30), PacienteNome = "Dentist appointment" },
+    new AgendaDTO { InicioSessao = DateTime.Today.AddDays(1), FimSessao = DateTime.Today.AddDays(12), PacienteNome = "Vacation" },
+    };*/
+
+    async Task CarregarAgenda()
+    {
+        try
+        {
+            appointments = await _agendaService.GetAgendas();
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar as agendas : {ex.Message}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        await ShowLoading();
+        try
+        {
+            await CarregarAgenda();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            NavigationManager.NavigateTo("notauthorized");
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar as agendas : {ex.Message}";
+        }
+    }
+
+    async Task ShowLoading()
+    {
+        isLoading = true;
+
+        await Task.Yield();
+
+        isLoading = false;
+    }
+
+    void OnSlotRender(SchedulerSlotRenderEventArgs args)
+    {
+        // Highlight today in month view
+        if (args.View.Text == "Month" && args.Start.Date == DateTime.Today)
+        {
+            args.Attributes["style"] = "background: rgba(255,220,40,.2);";
+        }
+
+        // Highlight working hours (9-18)
+        if ((args.View.Text == "Week" || args.View.Text == "Day") && args.Start.Hour > 8 && args.Start.Hour < 19)
+        {
+            args.Attributes["style"] = "background: rgba(255,220,40,.2);";
+        }
+    }
+
+    async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
+    {
+        //console.Log($"SlotSelect: Start={args.Start} End={args.End}");
+
+        if (args.View.Text != "Year")
+        {
+            AgendaDTO data = await DialogService.OpenAsync<IncluirAgendamento>("Incluir agendamento",
+                new Dictionary<string, object> { { "InicioSessao", args.Start }, { "FimSessao", args.End } });
+
+            if (data != null)
+            {
+                appointments.Add(data);
+                // Either call the Reload method or reassign the Data property of the Scheduler
+                await scheduler.Reload();
+            }
+        }
+    }
+
+    async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<AgendaDTO> args)
+    {
+        //console.Log($"AppointmentSelect: Appointment={args.Data.Text}");
+
+        var copy = new AgendaDTO
+            {
+                InicioSessao = args.Data.InicioSessao,
+                FimSessao = args.Data.FimSessao,
+                PacienteNome = args.Data.PacienteNome,
+                ValorSessao = args.Data.ValorSessao,
+                TipoConsulta = args.Data.TipoConsulta,
+                StatusConsulta = args.Data.StatusConsulta,
+                PacienteId = args.Data.PacienteId,
+                Id = args.Data.Id
+            };
+
+        var data = await DialogService.OpenAsync<EditarAgendamento>("Editar Agendamento", new Dictionary<string, object> { { "Agendamento", copy } });
+
+        if (data != null)
+        {
+            // Update the appointment
+            args.Data.InicioSessao = data.InicioSessao;
+            args.Data.FimSessao = data.FimSessao;
+            args.Data.PacienteNome = data.PacienteNome;
+            args.Data.ValorSessao = data.ValorSessao;
+            args.Data.TipoConsulta = data.TipoConsulta;
+            args.Data.StatusConsulta = data.StatusConsulta;
+            args.Data.PacienteId = data.PacienteId;
+            args.Data.Id = data.Id;
+        }
+
+        await scheduler.Reload();
+    }
+
+    void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<AgendaDTO> args)
+    {
+        // Never call StateHasChanged in AppointmentRender - would lead to infinite loop
+
+        if (args.Data.StatusConsulta == 2)
+        {
+            args.Attributes["style"] = "background: red";
+        }
+        else if (args.Data.StatusConsulta == 3)
+        {
+            args.Attributes["style"] = "background: yellow";
+        }
+        else if (args.Data.StatusConsulta == 1)
+        {
+            args.Attributes["style"] = "background: green";
+        }
+    }
+}

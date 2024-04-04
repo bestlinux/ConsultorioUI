@@ -4,9 +4,9 @@
     {
         public int Id { get; set; }
 
-        //1 - TOTAL
-        //2 - PARCIAL
-        public int TipoPagamento { get; set; }
+        //1 - PAGO
+        //2 - ABERTO
+        public int StatusPagamento { get; set; }
 
         public double? Valor { get; set; }
 

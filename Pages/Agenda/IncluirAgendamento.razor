@@ -1,0 +1,151 @@
+﻿@inject DialogService DialogService
+@inject IPacienteService _pacienteService
+@inject IAgendaService _agendaService
+@inject NavigationManager NavigationManager
+
+@if (MensagemErro is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        @MensagemErro
+    </RadzenAlert>
+}
+<RadzenTemplateForm TItem="AgendaDTO" Data="@model" Submit=@OnSubmit>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Paciente" />
+        </div>
+        <div class="col">
+            <RadzenDropDown Style="width:300px" TValue="int" @bind-Value="PacienteID" Placeholder="Selecione..." AllowFiltering="true"
+                            Data="@(pacientes)" TextProperty="Nome" ValueProperty="Id" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})" />
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Tipo da Consulta" />
+        </div>
+        <div class="col">
+            <RadzenRadioButtonList @bind-Value="model.TipoConsulta">
+                <Items>
+                    <RadzenRadioButtonListItem Text="Primeiro Atendimento" Value="1" />
+                    <RadzenRadioButtonListItem Text="Online" Value="2" />
+                    <RadzenRadioButtonListItem Text="Presencial" Value="3" />
+                </Items>
+            </RadzenRadioButtonList>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Valor da Sessão" />
+        </div>
+        <div class="col">
+            <RadzenNumeric Format="c" ShowUpDown="false" Name="ValorSessao" @bind-Value="model.ValorSessao" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" />
+            <RadzenRequiredValidator Text="Valor da Sessão é obrigatório" Component="ValorSessao" />
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Hora Inicio" />
+        </div>
+        <div class="col">
+            <RadzenDatePicker @bind-Value="@model.InicioSessao" Name="InicioSessao" ShowTime="true" />
+            <RadzenRequiredValidator Text="Data inicio é obrigatória" Component="InicioSessao" />
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Hora Fim" />
+        </div>
+        <div class="col">
+            <RadzenDatePicker Name="FimSessao" @bind-Value="@model.FimSessao" ShowTime="true" />
+            <RadzenRequiredValidator Component="FimSessao" Text="Data fim é obrigatória" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3"></div>
+        <div class="col">
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Save" />
+        </div>
+    </div>
+</RadzenTemplateForm>
+@code {
+    [Parameter]
+    public DateTime InicioSessao { get; set; }
+
+    [Parameter]
+    public DateTime FimSessao { get; set; }
+
+    public string? MensagemErro { get; set; }
+
+    public AgendaDTO model = new AgendaDTO();
+
+    IEnumerable<PacienteDTO> pacientes;
+
+    public PacienteDTO pacienteSelecionado;
+
+    public int PacienteID { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        model.TipoConsulta = 1;
+        await base.OnInitializedAsync();
+        try
+        {
+            await CarregarPacientes();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            NavigationManager.NavigateTo("notauthorized");
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os pacientes : {ex.Message}";
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        model.InicioSessao = InicioSessao;
+        model.FimSessao = FimSessao;
+    }
+
+    public async void OnSubmit(AgendaDTO model)
+    {
+        try
+        {
+            model.PacienteId = PacienteID;
+            model.PacienteNome = GetNomePaciente(pacientes, PacienteID);
+     
+            //model.PacienteNome = 
+            await _agendaService.CreateAgenda(model);            
+            Reset();
+            DialogService.Close(model);
+            MensagemErro = null;
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao criar o agendamento : {ex.Message}";
+            DialogService.Refresh();
+        }
+    }
+    void Reset()
+    {
+        model = new AgendaDTO();
+    }
+
+    async Task CarregarPacientes()
+    {
+        try
+        {
+            pacientes = await _pacienteService.GetPacientes();
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os pacientes : {ex.Message}";
+        }
+    }
+
+    public string GetNomePaciente(IEnumerable<PacienteDTO> pacientes, int id)
+    {
+        return pacientes.First(c => c.Id == id).Nome;
+    }
+}

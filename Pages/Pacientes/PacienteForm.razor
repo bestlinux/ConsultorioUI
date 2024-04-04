@@ -12,8 +12,8 @@
                                 <RadzenLabel Text="Nome" Component="Nome" />
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="8">
-                               <RadzenTextBox Style="width: 100%;" Name="Nome" @bind-Value="@Paciente.Nome" class="w-100" />
-                               <RadzenRequiredValidator Component="Nome" Popup=true Text="O campo nome é obrigatório" Style="position: absolute" />
+                                <RadzenTextBox Style="width: 100%;" Name="Nome" @bind-Value="@Paciente.Nome" class="w-100" />
+                                <RadzenRequiredValidator Component="Nome" Popup=true Text="O campo nome é obrigatório" Style="position: absolute" />
                             </RadzenColumn>
                         </RadzenRow>
                         <RadzenRow AlignItems="AlignItems.Center">
@@ -34,7 +34,7 @@
                             <RadzenColumn Size="12" SizeMD="4">
                                 <RadzenLabel Text="Data de Nascimento" Component="DataNascimento" />
                             </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="8">               
+                            <RadzenColumn Size="12" SizeMD="8">
                                 <RadzenLabel Text="Selecione a Data" Component="RadzenDatePickerBindValue" Style="margin-right: 8px; vertical-align: middle;" />
                                 <RadzenDatePicker @bind-Value=@Paciente.DataNascimento Name="RadzenDatePickerBindValue" DateFormat="dd/MM/yyyy" />
                                 <RadzenRequiredValidator Component="RadzenDatePickerBindValue" Popup=true Text="A data de nascimento é obrigatória" Style="position: absolute" />
@@ -87,7 +87,7 @@
                                             </RadzenColumn>
                                             <RadzenColumn Size="12" SizeMD="8">
                                                 <RadzenMask Mask="*****-***" CharacterPattern="[0-9]" Placeholder="00000-000" Name="EP" @bind-Value=@Paciente.CEP Style="width: 40%;" aria-label="CEP" Change=@(args => OnChange(args, "TextBox with placeholder")) />
-                                                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Visible="@isLoading"/>
+                                                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Visible="@isLoading" />
                                             </RadzenColumn>
                                         </RadzenRow>
                                         <RadzenRow AlignItems="AlignItems.Center">
@@ -141,13 +141,13 @@
                                     </RadzenStack>
                                 </RadzenTabsItem>
                                 <RadzenTabsItem Text="Informações Financeiras">
-                                       <RadzenStack>
+                                    <RadzenStack>
                                         <RadzenRow AlignItems="AlignItems.Center">
                                             <RadzenColumn Size="12" SizeMD="4">
                                                 <RadzenLabel Text="Tipo de Pagamento" Component="TipoPagamento" />
                                             </RadzenColumn>
                                             <RadzenColumn Size="12" SizeMD="8">
-                                                <RadzenDropDown @bind-Value="Paciente.TipoPagamento" Placeholder="Mensal" Data="@tipoPagamentos" Style="width: 100%;" TextProperty="Nome" ValueProperty="Id" Name="TipoPagamento">
+                                                <RadzenDropDown @bind-Value="Paciente.TipoPagamento" Placeholder="Mensal" Data="@tipoPagamentos" Style="width: 100%;" TextProperty="Nome" ValueProperty="Id" Name="TipoPagamento" Change=@(args => ValidaTipoPagamento(Paciente.TipoPagamento))>
                                                 </RadzenDropDown>
                                             </RadzenColumn>
                                         </RadzenRow>
@@ -159,7 +159,7 @@
                                                 <RadzenNumeric Format="c" ShowUpDown="false" @bind-Value="Paciente.ValorSessao" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" />
                                             </RadzenColumn>
                                         </RadzenRow>
-                                        <RadzenRow AlignItems="AlignItems.Center">
+                                        <RadzenRow AlignItems="AlignItems.Center" Visible="@tipoPagamentoMensal">
                                             <RadzenColumn Size="12" SizeMD="4">
                                                 <RadzenLabel Text="Dia de Vencimento" Component="DiaVencimento" />
                                             </RadzenColumn>
@@ -180,7 +180,7 @@
                                                 </RadzenRadioButtonList>
                                             </RadzenColumn>
                                         </RadzenRow>
-                                      </RadzenStack>
+                                    </RadzenStack>
                                 </RadzenTabsItem>
                             </Tabs>
                         </RadzenTabs>
@@ -191,15 +191,15 @@
     </RadzenRow>
     <RadzenStack Orientation="Orientation.Horizontal">
         <RadzenRow Gap="2rem" Class="rz-p-0 rz-p-lg-4">
-              <RadzenStack>
+            <RadzenStack>
                 <RadzenFieldset Text="Operações">
                     <RadzenStack Gap="2rem">
                         <RadzenRow AlignItems="AlignItems.Center">
-                             <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenColumn Size="12" SizeMD="4">
                                 <button type="submit" class="btn btn-success mt-2">
                                     @ButtonTextSubmit
                                 </button>
-                             </RadzenColumn>
+                            </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="4">
                                 <button class="btn btn-danger mt-2"
                                         @onclick="@(()=> navigation.NavigateTo("Pacientes"))">
@@ -213,9 +213,7 @@
         </RadzenRow>
     </RadzenStack>
 </RadzenTemplateForm>
-    <!--</EditForm>-->
-
-
+<!--</EditForm>-->
 @code {
 
     Variant variant = Variant.Filled;
@@ -223,6 +221,7 @@
     AlertStyle alertStyle = AlertStyle.Primary;
     double value = 0.0;
     bool isLoading = false;
+    bool tipoPagamentoMensal = true;
 
     [Inject]
     private NavigationManager? navigation { get; set; }
@@ -243,6 +242,8 @@
     [Parameter]
     public string ButtonTextCancelar { get; set; } = "Cancelar";
 
+    [Parameter]
+    public int TipoPagamentoEdit { get; set; }
 
     public class Order
     {
@@ -288,17 +289,71 @@
         public string Nome { get; set; }
     }
 
+    //void LoadData(LoadDataArgs args)
+    //{
+    //}
+
+    /*protected override async Task OnAfterRenderAsync(bool firstRender)
+            {
+                if (firstRender)
+                {
+                if (Paciente != null)
+                {
+                //SEMANAL
+                if (TipoPagamentoEdit == 4)
+                    tipoPagamentoMensal = false;
+    }
+    }
+    }*/
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            if (Paciente != null)
+            {
+                //SEMANAL
+                if (TipoPagamentoEdit == 4)
+                    tipoPagamentoMensal = false;
+                else
+                    tipoPagamentoMensal = true;
+
+                if (Paciente.TipoPagamento != TipoPagamentoEdit)
+                    tipoPagamentoMensal = true;
+            }
+        }
+    }
+
     protected async override Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
-        Paciente.Sexo = 1;
-        Paciente.Ativo = 1;
-        Paciente.Pais = 1;
-        Paciente.TipoPagamento = 1;
+        if (Paciente != null)
+        {
+            Paciente.Sexo = 1;
+            Paciente.Ativo = 1;
+            Paciente.Pais = 1;
+            Paciente.TipoPagamento = 1;
+
+            // if (TipoPagamentoEdit == 4)
+            //tipoPagamentoMensal = false;
+        }
 
     }
-
+    public void ValidaTipoPagamento(int? tipoPagamento)
+    {
+        //SEMANAL
+        if (tipoPagamento == 4)
+        {
+            if (Paciente != null)
+            {
+                Paciente.DiaVencimento = 0;
+                tipoPagamentoMensal = false;
+            }
+        }
+        else
+            tipoPagamentoMensal = true;
+    }
     async Task OnChange(string value, string name)
     {
         try
@@ -348,7 +403,8 @@
     {
         new TipoPagamento() { Id = 1, Nome = "Mensal" },
         new TipoPagamento() { Id = 2, Nome = "Avulso" },
-        new TipoPagamento() { Id = 3, Nome = "Gratuito" }
+        new TipoPagamento() { Id = 3, Nome = "Gratuito" },
+        new TipoPagamento() { Id = 4, Nome = "Semanal" }
     };
-   
-}
+
+    }

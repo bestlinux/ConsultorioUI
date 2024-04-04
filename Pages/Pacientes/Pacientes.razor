@@ -84,10 +84,14 @@
                     @String.Format("{0:d}", "Avulso")
                     
                 }
-                else
+                else if (order.TipoPagamento == 3)
                 {
                     @String.Format("{0:d}", "Gratuito")
                     
+                }
+                else
+                {
+                    @String.Format("{0:d}", "Semanal")
                 }
             </Template>
             <EditTemplate Context="order">
