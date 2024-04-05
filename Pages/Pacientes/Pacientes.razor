@@ -84,11 +84,6 @@
                     @String.Format("{0:d}", "Avulso")
                     
                 }
-                else if (order.TipoPagamento == 3)
-                {
-                    @String.Format("{0:d}", "Gratuito")
-                    
-                }
                 else
                 {
                     @String.Format("{0:d}", "Semanal")
@@ -141,17 +136,22 @@
         var confirmationResult = await this.DialogService.Confirm("Você deseja excluir o paciente " + order.Nome + " ?", "Pacientes", new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
         if (confirmationResult == true)
         {
-            Reset();
-
             if (orders.Contains(order))
             {
-                bool result = await _pacienteService.DeletePaciente(order.Id);
-
-                if (result)
+                try
                 {
-                    await CarregarPacientes();
-                    await ordersGrid.Reload();
+                    bool result = await _pacienteService.DeletePaciente(order.Id);
+
+                    if (result)
+                    {
+                        await CarregarPacientes();
+                        await ordersGrid.Reload();
+                    }
                 }
+                catch (Exception ex)
+                {
+                    await DialogService.Alert($"Erro ao excluir o paciente : {ex.Message}", "Erro", new AlertOptions() { OkButtonText = "Fechar" });
+                }          
             }
             else
             {

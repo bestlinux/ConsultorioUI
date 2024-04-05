@@ -117,6 +117,19 @@ namespace ConsultorioUI.Services.Api
                 {
                     throw new UnauthorizedAccessException();
                 }
+                else if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    var errorMessage = string.Empty;
+                    var apiResponse = await response.Content.ReadAsStreamAsync();
+                    ErrorDto erro = await JsonSerializer
+                                        .DeserializeAsync<ErrorDto>(apiResponse, _options);
+
+                    foreach (var item in erro.Errors)
+                    {
+                        errorMessage = String.Concat(item.Message, Environment.NewLine);
+                    }
+                    throw new Exception(errorMessage);
+                }
             }
             return false;
         }

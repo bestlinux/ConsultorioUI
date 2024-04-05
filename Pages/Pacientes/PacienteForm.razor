@@ -313,7 +313,7 @@
             if (Paciente != null)
             {
                 //SEMANAL
-                if (TipoPagamentoEdit == 4)
+                if (TipoPagamentoEdit == 3)
                     tipoPagamentoMensal = false;
                 else
                     tipoPagamentoMensal = true;
@@ -343,7 +343,7 @@
     public void ValidaTipoPagamento(int? tipoPagamento)
     {
         //SEMANAL
-        if (tipoPagamento == 4)
+        if (tipoPagamento == 3)
         {
             if (Paciente != null)
             {
@@ -403,8 +403,7 @@
     {
         new TipoPagamento() { Id = 1, Nome = "Mensal" },
         new TipoPagamento() { Id = 2, Nome = "Avulso" },
-        new TipoPagamento() { Id = 3, Nome = "Gratuito" },
-        new TipoPagamento() { Id = 4, Nome = "Semanal" }
+        new TipoPagamento() { Id = 3, Nome = "Semanal" }
     };
 
     }

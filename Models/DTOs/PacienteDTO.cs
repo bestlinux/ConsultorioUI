@@ -35,8 +35,7 @@ namespace ConsultorioUI.Models.DTOs
 
         //1 - MENSAL
         //2 - AVULSO
-        //3 - GRATUITO
-        //4 - SEMANAL
+        //3 - SEMANAL
         public int? TipoPagamento { get; set; }
 
         public double? ValorSessao { get; set; }

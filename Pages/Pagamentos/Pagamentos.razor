@@ -27,7 +27,7 @@
             <RadzenCard>
                 <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3">1. Pacientes</RadzenText>
                 <RadzenDropDown Style="width:300px" TValue="int" @bind-Value="PacienteID" Placeholder="Selecione..." AllowFiltering="true"
-                                Data="@(pacientes)" TextProperty="Nome" ValueProperty="Id" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})" />
+                                Data="@(pacientes)" TextProperty="Nome" ValueProperty="Id" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})" Change=@(args => CarregarPagamentosPorPacienteAno(PacienteID)) />
             </RadzenCard>
         </div>
         <div class="col-xl-3 mb-4">
@@ -39,7 +39,7 @@
         <div class="col-xl-3 mb-4">
             <RadzenCard>
                 <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3">3. Mês</RadzenText>
-                <RadzenDropDown TValue="int" @bind-Value="MesID" Placeholder="Selecione..." AllowFiltering="true" Data="@meses" Style="width: 100%;" TextProperty="Nome" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})" ValueProperty="Id" Name="Nome" Change=@(args => OnChange(MesID))>
+                <RadzenDropDown TValue="int" @bind-Value="MesID" Placeholder="Selecione..." AllowFiltering="true" Data="@meses" Style="width: 100%;" TextProperty="Nome" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})" ValueProperty="Id" Name="Nome" Change=@(args => CarregarPagamentosPorPacienteMesAno(MesID))>
                 </RadzenDropDown>
             </RadzenCard>
         </div>
@@ -86,10 +86,6 @@
                                 <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Avulso")</span>
                             }
                             else if (pagamento.Paciente.TipoPagamento == 3)
-                            {
-                                <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Gratuito")</span>
-                            }
-                            else
                             {
                                 <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Semanal")</span>
                             }
@@ -289,9 +285,13 @@
                     {
                         await CarregaPagamentosPorPacienteMesAno(PacienteID, MesID, Ano);
                     }
+                    else if (MesID == 0 || MesID == -1 && Ano != 0)
+                    {
+                        await CarregarPagamentosPorPacienteAno(PacienteID);
+                    }
                     else
                     {
-                        await CarregarPagamentos();
+                        await CarregarPagamentos();                        
                     }
                     await pagamentosGrid.Reload();
                 }
@@ -474,6 +474,8 @@
 
     async Task OnClick()
     {
+        PacienteID = -1;
+        MesID = -1;
         await CarregarPagamentos();
     }
 
@@ -516,7 +518,15 @@
         }
     }
 
-    async Task OnChange(int value)
+    async Task CarregarPagamentosPorPacienteAno(int PacienteID)
+    {
+        if (Ano.ToString().Length != 4)
+            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Aviso", Detail = "Por favor, informe um ano valido", Duration = 4000 });
+
+        //pagamentos = await _pagamentoService.GetPagamentosByPacienteMesAno(PacienteID, value, Ano);
+        await CarregaPagamentosPorPacienteMesAno(PacienteID, MesID, Ano);
+    }
+    async Task CarregarPagamentosPorPacienteMesAno(int value)
     {
         if (PacienteID == 0)
             ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Aviso", Detail = "Por favor, selecione um paciente", Duration = 4000 });

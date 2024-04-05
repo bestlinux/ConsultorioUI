@@ -22,11 +22,11 @@
             <RadzenLabel Text="Tipo da Consulta" />
         </div>
         <div class="col">
-            <RadzenRadioButtonList @bind-Value="model.TipoConsulta">
+            <RadzenRadioButtonList TValue="int" @bind-Value="model.TipoConsulta" Change=@(args => ValidaAtendimento(model.TipoConsulta))>
                 <Items>
-                    <RadzenRadioButtonListItem Text="Primeiro Atendimento" Value="1" />
-                    <RadzenRadioButtonListItem Text="Online" Value="2" />
-                    <RadzenRadioButtonListItem Text="Presencial" Value="3" />
+                    <RadzenRadioButtonListItem Text="Online" Value="1" />
+                    <RadzenRadioButtonListItem Text="Presencial" Value="2" />
+                    <RadzenRadioButtonListItem Text="Primeiro Atendimento" Value="3" />
                 </Items>
             </RadzenRadioButtonList>
         </div>
@@ -48,10 +48,10 @@
     </div>
     <div class="row" style="margin-bottom: 16px">
         <div class="col-md-3">
-            <RadzenLabel Text="Valor da Sessão" />
+            <RadzenLabel Text="Valor da Sessão" Visible=@PrimeiroAtendimento />
         </div>
         <div class="col">
-            <RadzenNumeric Format="c" ShowUpDown="false" Name="ValorSessao" @bind-Value="model.ValorSessao" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" />
+            <RadzenNumeric Format="c" ShowUpDown="false" Name="ValorSessao" @bind-Value="model.ValorSessao" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" Visible=@PrimeiroAtendimento />
             <RadzenRequiredValidator Text="Valor da Sessão é obrigatório" Component="ValorSessao" />
         </div>
     </div>
@@ -89,11 +89,25 @@
     [Parameter]
     public AgendaDTO Agendamento { get; set; }
 
+    public bool PrimeiroAtendimento = true;
+
     AgendaDTO model = new AgendaDTO();
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        if (Agendamento.TipoConsulta == 3)
+            PrimeiroAtendimento = false;
+        else
+            PrimeiroAtendimento = true;
+    }
+
+    public async Task ValidaAtendimento(int TipoAtendimento)
+    {
+        if (TipoAtendimento == 3)
+            PrimeiroAtendimento = false;
+        else
+            PrimeiroAtendimento = true;
     }
 
     protected override void OnParametersSet()
