@@ -2,28 +2,11 @@
     <div class="container-fluid">
         <a class="navbar-brand" href="">Consultorio Psico</a>
         <RadzenPanelMenu>
-            <RadzenPanelMenuItem Text="Home" Icon="home" Path=""/>
-            <RadzenPanelMenuItem Text="Pacientes" Icon="accessibility" Path="pacientes" />
-            <RadzenPanelMenuItem Text="Pagamentos" Icon="credit_card" Path="pagamentos" />
-            <!--<RadzenPanelMenuItem Text="Financeiro" Icon="account_balance" Path="">
-                <RadzenPanelMenuItem Text="Pagamentos" Icon="credit_card" Path="pagamentos" />
-                <RadzenPanelMenuItem Text="Relatórios" Path="relatorios" Icon="description"></RadzenPanelMenuItem>
-            </RadzenPanelMenuItem>-->
-            <RadzenPanelMenuItem Text="Agenda" Icon="date_range" Path="agenda" />
-            <!--<AuthorizeView>
-                <Authorized>
-                    <RadzenPanelMenuItem Text="Agenda" Icon="home" Path="pacientes" />
-                </Authorized>
-                <NotAuthorized>
-                </NotAuthorized>
-            </AuthorizeView>-->
             <AuthorizeView>
                 <Authorized>
-                    <li class="nav-item px-3">
-                        <NavLink class="nav-link" href="fileuploader">
-                            <span class="oi oi-cloud-upload" aria-hidden="true"></span> Enviar Arquivos
-                        </NavLink>
-                    </li>
+                    <RadzenPanelMenuItem Text="Agenda" Icon="date_range" Path="/" />
+                    <RadzenPanelMenuItem Text="Pacientes" Icon="accessibility" Path="pacientes" />
+                    <RadzenPanelMenuItem Text="Pagamentos" Icon="credit_card" Path="pagamentos" />                    
                 </Authorized>
                 <NotAuthorized>
                 </NotAuthorized>

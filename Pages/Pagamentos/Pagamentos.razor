@@ -508,7 +508,7 @@
             pagamento.Mes = MesIDPagamento;
             pagamento.PacienteId = PacienteIDPagamento;
 
-            await ShowBusyDialog(false, ds);
+            await ShowBusyDialogCriaPagamento(false, ds);
 
             await CarregarPagamentos();
         }
@@ -561,7 +561,7 @@
         new Mes() { Id = 12, Nome = "Dezembro" }
                 };
 
-    async Task ShowBusyDialog(bool withMessageAsString, DialogService ds)
+    async Task ShowBusyDialogCriaPagamento(bool withMessageAsString, DialogService ds)
     {
         try
         {

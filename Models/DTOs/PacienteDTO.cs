@@ -47,6 +47,8 @@ namespace ConsultorioUI.Models.DTOs
         //1 - ATIVO
         //2 - INATIVO
         public int Ativo { get; set; }
+
+        public string? Prontuario { get; set; }
         /*[Required(ErrorMessage = "O campo Cidade é obrigatório")]
         public string Cidade { get; set; }*/
 

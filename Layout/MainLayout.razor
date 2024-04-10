@@ -6,8 +6,15 @@
             <RadzenSidebarToggle Click="@(() => sidebar1Expanded = !sidebar1Expanded)" />
             <div class="top-row px-4">
                 <LoginDisplay />
-                <a href="mailto:aparecidagago@gmail.com" target="_blank">aparecidagago@gmail.com</a>
             </div>
+              <AuthorizeView>
+                  <Authorized>
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary">
+                        Alertas
+                        <RadzenBadge Variant="Variant.Outlined" BadgeStyle="BadgeStyle.Light" IsPill="@true" Text="15" class="rz-ml-2" />
+                    </RadzenButton>
+                   </Authorized>
+                </AuthorizeView>
         </RadzenStack>
     </RadzenHeader>
     <RadzenSidebar @bind-Expanded="@sidebar1Expanded">
@@ -16,12 +23,19 @@
         </RadzenPanelMenu>
     </RadzenSidebar>
     <RadzenBody>
-        <div class="rz-p-4">
-            @Body
-        </div>
+        <AuthorizeView>
+            <Authorized>
+                <div class="rz-p-4">
+                    @Body
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <Login />
+            </NotAuthorized>
+        </AuthorizeView>
     </RadzenBody>
     <RadzenFooter>
-        Footer
+        <RadzenText TextStyle="TextStyle.Caption">Todos os direitos reservados para Aparecida Gago Machado - CRP 06/149382  - aparecidagago@gmail.com</RadzenText><br />
     </RadzenFooter>
 </RadzenLayout>
 

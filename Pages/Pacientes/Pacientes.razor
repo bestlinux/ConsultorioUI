@@ -103,6 +103,8 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="PacienteDTO" Context="order" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
             <Template Context="order">
+                <RadzenButton Icon="note_add" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => ShowProntuarioDialog(order))" @onclick:stopPropagation="true">
+                </RadzenButton>
                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(order))" @onclick:stopPropagation="true">
                 </RadzenButton>
                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1"
@@ -130,6 +132,155 @@
     private string? errorMessage = "Não foi possível acessar os Pacientes";
 
     IEnumerable<StatusPaciente> statusPaciente;
+
+    string htmlValue = "<h1>Hello World!</h1>";
+
+    [Parameter]
+    public PacienteDTO? Paciente { get; set; }
+
+    void OnPaste(HtmlEditorPasteEventArgs args)
+    {
+        //console.Log($"Paste: {args.Html}");
+    }
+
+    void OnChange(string html)
+    {
+       // console.Log($"Change: {html}");
+    }
+
+    void OnInput(string html)
+    {
+        //console.Log($"Input: {html}");
+    }
+
+    void OnExecute(HtmlEditorExecuteEventArgs args)
+    {
+        //console.Log($"Execute: {args.CommandName}");
+    }
+
+    async void ShowProntuarioDialog(PacienteDTO paciente)
+    {
+        try
+        {
+            var result = await DialogService.OpenAsync("Prontuário " + paciente.Nome, ds =>
+            @<RadzenTemplateForm Data="@Paciente" TItem=PacienteDTO>
+            <RadzenHtmlEditor @bind-Value=@paciente.Prontuario style="height: 512px;" Input=@OnInput Change=@OnChange Paste=@OnPaste Execute=@OnExecute UploadUrl="upload/image" />
+            <RadzenStack Gap="1.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Orientation.Horizontal">
+                    <RadzenButton Text="Ok" Style="width: 80px;" Click="@(args => CriarProntuario(paciente, ds))" />
+                        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@(args => CancelarProntuario(ds))" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenStack>
+            </RadzenTemplateForm>
+    ,
+             new DialogOptions() { Height = "700px", Resizable = true, Draggable = true });
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+    async Task ShowBusyDialogCriaProntuario(PacienteDTO paciente, bool withMessageAsString, DialogService ds)
+    {
+        try
+        {
+            InvokeAsync(async () =>
+        {
+            try
+            {
+                // Simulate background task
+                await _pacienteService.UpdatePaciente(paciente);
+                //busy = false;
+
+                // Close the dialog
+                DialogService.Close();
+
+                Reset();
+                ds.Close();
+            }
+            catch (Exception ex)
+            {
+                MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+                DialogService.Close();
+                //DialogService.Alert(MensagemErro, "ERRO", new AlertOptions() { OkButtonText = "Fechar" });
+                await DialogService.OpenAsync("ERRO", ds =>
+            @<div>
+                @MensagemErro
+            </div>, new DialogOptions()
+                  {
+                      Style = "color:red"
+                  });
+                    }
+                });
+
+            if (withMessageAsString)
+            {
+                await BusyDialog("Busy ...");
+            }
+            else
+            {
+                await BusyDialog();
+            }
+        }
+        catch (Exception ex)
+        {
+            DialogService.Close();
+            MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+        }
+    }
+    // Busy dialog from markup
+    async Task BusyDialog()
+    {
+        await DialogService.OpenAsync("", ds =>
+    @<RadzenStack AlignItems="AlignItems.Center" Gap="2rem" Class="rz-p-12">
+        <RadzenImage Path="images/community.svg" Style="width: 200px;" AlternateText="community" />
+        <RadzenText TextStyle="TextStyle.H6">Por favor, aguarde...</RadzenText>
+    </RadzenStack>
+        , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
+
+    async Task BusyDialog(string message)
+    {
+        await DialogService.OpenAsync("", ds =>
+        {
+            RenderFragment content = b =>
+            {
+                b.OpenElement(0, "RadzenRow");
+
+                b.OpenElement(1, "RadzenColumn");
+                b.AddAttribute(2, "Size", "12");
+
+                b.AddContent(3, message);
+
+                b.CloseElement();
+                b.CloseElement();
+            };
+            return content;
+        }, new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
+
+
+    async Task CriarProntuario(PacienteDTO paciente, DialogService ds)
+    {
+        try
+        {
+
+            await ShowBusyDialogCriaProntuario(paciente, false, ds);
+
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+        }
+    }
+
+    void CancelarProntuario(DialogService ds)
+    {
+        Reset();
+        ds.Close();
+    }
 
     public async Task ConfirmDelete(PacienteDTO order)
     {
