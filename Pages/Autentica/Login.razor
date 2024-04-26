@@ -20,6 +20,7 @@
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenCard Class="rz-shadow-0 rz-border-radius-0 rz-p-12">
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Visible=@Loading />
                     <RadzenText TextStyle="TextStyle.H5" TagName="TagName.H2" Class="rz-mb-6">
                         Login
                     </RadzenText>
@@ -57,6 +58,7 @@
     public LoginModel loginModel = new LoginModel();
     public bool ShowErrors;
     public string Error = string.Empty;
+    public bool Loading = false;
 
     bool rememberMe = true;
 
@@ -68,8 +70,9 @@
             loginModel.Email = args.Username;
             loginModel.Password = args.Password;
 
+            Loading = true;
             var result = await AuthService.Login(loginModel);
-
+            Loading = false;
             if (result.Token is not null)
             {
                 NavigationManager.NavigateTo("/");
@@ -84,6 +87,7 @@
         {
             Error = "Não foi possível fazer o Login : " + ex.Message;
             ShowErrors = true;
+            Loading = false;
         }
     }
 }

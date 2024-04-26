@@ -1,0 +1,270 @@
+﻿@page "/prontuarios"
+@inject IPacienteService _pacienteService
+@inject IProntuarioService _prontuarioService
+@inject NavigationManager NavigationManager
+@inject DialogService DialogService
+
+<h3>Prontuários</h3>
+<style>
+    .rz-grid-table {
+        width: unset;
+    }
+</style>
+@if (MensagemErro is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        @MensagemErro
+    </RadzenAlert>
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl-4 mb-4">
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H3">Pacientes</RadzenText>
+                <RadzenDropDown Style="width:300px" TValue="int" @bind-Value="PacienteID" Placeholder="Selecione..." AllowFiltering="true"
+                                Data="@(pacientes)" TextProperty="Nome" ValueProperty="Id" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})" Change=@(args => CarregarProntuariosPorPacienteAno(PacienteID)) />
+            </RadzenCard>
+        </div>
+        <div class="col-xl-4 mb-4">
+            <RadzenDataGrid @ref="prontuariosGrid" AllowAlternatingRows="false" AllowFiltering="false" AllowPaging="true" PageSize="10" AllowSorting="false" EditMode="DataGridEditMode.Single" IsLoading=@isLoading
+                            Data="@prontuarios" TItem="ProntuarioDTO" ColumnWidth="100px">
+                <Columns>
+                    <RadzenDataGridColumn TItem="ProntuarioDTO" Property="Pagina" Title="" Width="200px">
+                        <Template Context="prontuario">
+                            @String.Format("{0:d}", prontuario.Pagina)
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="ProntuarioDTO" Property="Conteudo" Title="" Width="50px">
+                        <Template Context="prontuario">
+                            <RadzenButton Icon="note_add" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => ShowProntuarioDialog(prontuario))" @onclick:stopPropagation="true">
+                            </RadzenButton>
+                        </Template>
+                    </RadzenDataGridColumn>                    
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    bool isLoading = false;
+
+    RadzenDataGrid<ProntuarioDTO>? prontuariosGrid;
+
+    int selectedIndex = 0;
+
+    public string? MensagemErro { get; set; }
+
+    private string? errorMessage = "Não foi possível acessar os Prontuários";
+
+    private ProntuarioDTO? Prontuario;
+
+    IEnumerable<ProntuarioDTO> prontuarios = new List<ProntuarioDTO>();
+
+    IEnumerable<PacienteDTO>? pacientes;
+
+    public int PacienteID { get; set; }
+
+    void OnPaste(HtmlEditorPasteEventArgs args)
+    {
+        //console.Log($"Paste: {args.Html}");
+    }
+
+    void OnChange(string html)
+    {
+       // console.Log($"Change: {html}");
+    }
+
+    void OnInput(string html)
+    {
+        //console.Log($"Input: {html}");
+    }
+
+    void OnExecute(HtmlEditorExecuteEventArgs args)
+    {
+        //console.Log($"Execute: {args.CommandName}");
+    }
+    
+    void CancelarProntuario(DialogService ds)
+    {
+        ds.Close();
+    }
+
+    async void ShowProntuarioDialog(ProntuarioDTO prontuario)
+    {
+        try
+        {
+            var result = await DialogService.OpenAsync("Prontuário " + prontuario.Paciente?.Nome + " - " + prontuario.Pagina, ds =>
+            @<RadzenTemplateForm Data="@Prontuario" TItem=ProntuarioDTO>
+            <RadzenHtmlEditor @bind-Value=@prontuario.Conteudo style="height: 512px;" Input=@OnInput Change=@OnChange Paste=@OnPaste Execute=@OnExecute UploadUrl="upload/image" />
+            <RadzenStack Gap="1.5rem">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                    <RadzenStack Orientation="Orientation.Horizontal">
+                    <RadzenButton Text="Ok" Style="width: 80px;" Click="@(args => CriarProntuario(prontuario, ds))" />
+                        <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@(args => CancelarProntuario(ds))" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenStack>
+            </RadzenTemplateForm>
+    ,
+             new DialogOptions() { Height = "700px", Resizable = true, Draggable = true });
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+    async Task ShowBusyDialogCriaProntuario(ProntuarioDTO prontuario, bool withMessageAsString, DialogService ds)
+    {
+        try
+        {
+            InvokeAsync(async () =>
+    {
+        try
+        {
+            // Simulate background task
+            await _prontuarioService.UpdateProntuario(prontuario);
+            //busy = false;
+
+            // Close the dialog
+            DialogService.Close();
+
+            ds.Close();
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao salvar o prontuario : {ex.Message}";
+            DialogService.Close();
+            //DialogService.Alert(MensagemErro, "ERRO", new AlertOptions() { OkButtonText = "Fechar" });
+            await DialogService.OpenAsync("ERRO", ds =>
+    @<div>
+        @MensagemErro
+    </div>, new DialogOptions()
+              {
+                  Style = "color:red"
+              });
+        }
+    });
+
+            if (withMessageAsString)
+            {
+                await BusyDialog("Busy ...");
+            }
+            else
+            {
+                await BusyDialog();
+            }
+        }
+        catch (Exception ex)
+        {
+            DialogService.Close();
+            MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+        }
+    }
+    // Busy dialog from markup
+    async Task BusyDialog()
+    {
+        await DialogService.OpenAsync("", ds =>
+    @<RadzenStack AlignItems="AlignItems.Center" Gap="2rem" Class="rz-p-12">
+        <RadzenImage Path="images/community.svg" Style="width: 200px;" AlternateText="community" />
+        <RadzenText TextStyle="TextStyle.H6">Por favor, aguarde...</RadzenText>
+    </RadzenStack>
+    , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
+
+
+    async Task BusyDialog(string message)
+    {
+        await DialogService.OpenAsync("", ds =>
+        {
+            RenderFragment content = b =>
+            {
+                b.OpenElement(0, "RadzenRow");
+
+                b.OpenElement(1, "RadzenColumn");
+                b.AddAttribute(2, "Size", "12");
+
+                b.AddContent(3, message);
+
+                b.CloseElement();
+                b.CloseElement();
+            };
+            return content;
+        }, new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
+
+    async Task CriarProntuario(ProntuarioDTO prontuario, DialogService ds)
+    {
+        try
+        {
+
+            await ShowBusyDialogCriaProntuario(prontuario, false, ds);
+
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+        }
+    }
+
+    async Task CarregarPacientes()
+    {
+        try
+        {
+            pacientes = await _pacienteService.GetPacientes();
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os pacientes : {ex.Message}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        try
+        {
+            await CarregarPacientes();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            NavigationManager.NavigateTo("logout");
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os pacientes : {ex.Message}";
+        }
+    }
+    async Task ShowLoading()
+    {
+        isLoading = true;
+
+        await Task.Yield();
+
+        isLoading = false;
+    }
+
+    async Task CarregarProntuariosPorPacienteAno(int PacienteID)
+    {
+        await ShowLoading();
+
+        try
+        {
+            prontuarios = await _prontuarioService.GetProntuariosByPaciente(PacienteID);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            NavigationManager.NavigateTo("logout");
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os prontuarios : {ex.Message}";
+        }
+
+       
+    }
+
+}

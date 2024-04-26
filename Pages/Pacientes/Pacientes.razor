@@ -103,8 +103,6 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="PacienteDTO" Context="order" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Frozen="true" FrozenPosition="FrozenColumnPosition.Right">
             <Template Context="order">
-                <RadzenButton Icon="note_add" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => ShowProntuarioDialog(order))" @onclick:stopPropagation="true">
-                </RadzenButton>
                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(order))" @onclick:stopPropagation="true">
                 </RadzenButton>
                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1"
@@ -354,7 +352,7 @@
         }
         catch (UnauthorizedAccessException)
         {
-            NavigationManager.NavigateTo("notauthorized");
+            NavigationManager.NavigateTo("logout");
         }
         catch (Exception ex)
         {
@@ -362,11 +360,38 @@
         }
     }
 
+    async Task ShowBusyDialogLogout()
+    {
+        await BusyDialogLogout();        
+    }
+
+    // Busy dialog from markup
+    async Task BusyDialogLogout()
+    {
+        await DialogService.OpenAsync("", ds =>
+        @<RadzenStack AlignItems="AlignItems.Center" Gap="2rem" Class="rz-p-12">
+        <RadzenImage Path="images/community.svg" Style="width: 200px;" AlternateText="community" />
+        <RadzenText TextStyle="TextStyle.H6">Sua sessão expirou, por favor, refaça o login</RadzenText>
+        <RadzenButton Click=@(args => RefazerLogin(ds)) Text="Sair" ButtonStyle="ButtonStyle.Primary" />
+        </RadzenStack>
+    , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
+
+    void RefazerLogin(DialogService ds)
+    {
+        ds.Close();
+        NavigationManager.NavigateTo("logout");
+    }
+
     async Task CarregarPacientes()
     {
         try
-        {
+        {           
             orders = await _pacienteService.GetPacientes();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            await ShowBusyDialogLogout();
         }
         catch (Exception ex)
         {

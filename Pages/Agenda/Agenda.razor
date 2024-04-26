@@ -30,11 +30,38 @@
     new AgendaDTO { InicioSessao = DateTime.Today.AddDays(1), FimSessao = DateTime.Today.AddDays(12), PacienteNome = "Vacation" },
     };*/
 
+    async Task ShowBusyDialogLogout()
+    {
+        await BusyDialogLogout();
+    }
+
+    // Busy dialog from markup
+    async Task BusyDialogLogout()
+    {
+        await DialogService.OpenAsync("", ds =>
+    @<RadzenStack AlignItems="AlignItems.Center" Gap="2rem" Class="rz-p-12">
+        <RadzenImage Path="images/community.svg" Style="width: 200px;" AlternateText="community" />
+        <RadzenText TextStyle="TextStyle.H6">Sua sessão expirou, por favor, refaça o login</RadzenText>
+        <RadzenButton Click=@(args => RefazerLogin(ds)) Text="Sair" ButtonStyle="ButtonStyle.Primary" />
+    </RadzenStack>
+    , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
+    }
+
+    void RefazerLogin(DialogService ds)
+    {
+        ds.Close();
+        NavigationManager.NavigateTo("logout");
+    }
+
     async Task CarregarAgenda()
     {
         try
         {
             appointments = await _agendaService.GetAgendas();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            await ShowBusyDialogLogout();
         }
         catch (Exception ex)
         {
@@ -53,7 +80,7 @@
         }
         catch (UnauthorizedAccessException)
         {
-            NavigationManager.NavigateTo("notauthorized");
+            NavigationManager.NavigateTo("logout");
         }
         catch (Exception ex)
         {
