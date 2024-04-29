@@ -18,6 +18,7 @@
         //1 - PRIMEIRO ATENDIMENTO
         //2 - CONSULTA ONLINE
         //3 - CONSULTA PRESENCIAL
+        //4 - ANIVERSARIO
         public int TipoConsulta { get; set; }
 
         //1- ATENDIDOD  2 - FALTOU 3 - DESMARTCAO

@@ -32,5 +32,6 @@ builder.Services.AddScoped<IPacienteService, PacienteService>();
 builder.Services.AddScoped<IPagamentoService, PagamentoService>();
 builder.Services.AddScoped<IAgendaService, AgendaService>();
 builder.Services.AddScoped<IProntuarioService, ProntuarioService>();
+builder.Services.AddScoped<IAlertaService, AlertaService>();
 
 await builder.Build().RunAsync();

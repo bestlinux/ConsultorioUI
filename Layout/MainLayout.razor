@@ -1,4 +1,20 @@
-﻿@inherits LayoutComponentBase
+﻿@using Blazored.LocalStorage
+@inherits LayoutComponentBase
+@inject IAlertaService _alertaService;
+@inject ILocalStorageService _localStorageService;
+@inject NavigationManager NavigationManager
+
+<style>
+    .rz-grid-table {
+        width: unset;
+    }
+</style>
+@if (MensagemErro is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        @MensagemErro
+    </RadzenAlert>
+}
 <RadzenComponents />
 <RadzenLayout>
     <RadzenHeader>
@@ -9,9 +25,9 @@
             </div>
               <AuthorizeView>
                   <Authorized>
-                    <RadzenButton ButtonStyle="ButtonStyle.Primary">
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" Click="@OnClick">
                         Alertas
-                        <RadzenBadge Variant="Variant.Outlined" BadgeStyle="BadgeStyle.Light" IsPill="@true" Text="15" class="rz-ml-2" />
+                        <RadzenBadge Variant="Variant.Outlined" BadgeStyle="BadgeStyle.Light" IsPill="@true" Text="@totalAlertas.ToString()" class="rz-ml-2" />
                     </RadzenButton>
                    </Authorized>
                 </AuthorizeView>
@@ -44,9 +60,71 @@
 
     private System.Threading.Timer? timer;
 
+    IEnumerable<AlertaDTO> alertas = new List<AlertaDTO>();
+
+    public string? MensagemErro { get; set; }
+
+    public int? totalAlertas { get; set; }
+
+    public void OnClick()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            var token = await _localStorageService.ContainKeyAsync("authToken");
+
+            if (token)
+                await CarregarAlertas();
+        }
+        catch (UnauthorizedAccessException)
+        {
+
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os alertas : {ex.Message}";
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        //REGISTRA AVISOS A CADA 5 SEGUNDOS
-        //BUSCAR AVISOS A CADA 5 SEGUNDOS
+        await base.OnInitializedAsync();
+
+        try
+        {
+            var token = await _localStorageService.ContainKeyAsync("authToken");
+
+            if (token)
+                await CarregarAlertas();
+        }
+        catch (UnauthorizedAccessException)
+        {
+
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os alertas : {ex.Message}";
+        }
+    }
+
+    async Task CarregarAlertas()
+    {
+        try
+        {
+            alertas = await _alertaService.GetAlertasByMesAno(DateTime.Now.Month, DateTime.Now.Year);
+            totalAlertas = alertas.Count();
+        }
+        catch (UnauthorizedAccessException)
+        {
+
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os alertas : {ex.Message}";
+        }
     }
 }

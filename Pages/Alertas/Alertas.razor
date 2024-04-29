@@ -1,0 +1,102 @@
+﻿@page "/"
+@inject IAlertaService _alertaService
+@inject NavigationManager NavigationManager
+@inject DialogService DialogService
+
+<h3>Alertas</h3>
+<style>
+    .rz-grid-table {
+        width: unset;
+    }
+</style>
+@if (MensagemErro is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        @MensagemErro
+    </RadzenAlert>
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <RadzenDataGrid @ref="alertasGrid" AllowAlternatingRows="false" AllowFiltering="false" AllowPaging="true" PageSize="10" AllowSorting="false" EditMode="DataGridEditMode.Single" IsLoading=@isLoading
+                            Data="@alertas" TItem="AlertaDTO" ColumnWidth="200px">
+                <Columns>
+                    <RadzenDataGridColumn TItem="AlertaDTO" Property="Descricao" Title="" Width="100px">
+                        <Template Context="alerta">
+                            @String.Format("{0:d}", alerta.Descricao)
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="AlertaDTO" Property="Categoria" Title="" Width="530px">
+                        <Template Context="alerta">
+                            @if (alerta.Categoria == 1)
+                            {
+                                <span style='color: var(--rz-success-dark)'>@String.Format("{0:d}", "Aniversário")</span>
+                            }
+                            else
+                            {
+                                <span style='color: var(--rz-danger-dark)'>@String.Format("{0:d}", "Pagamento")</span>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </div>
+    </div>
+</div>
+
+@code {
+    public string? MensagemErro { get; set; }
+
+    private string? errorMessage = "Não foi possível acessar os Alertas";
+
+    bool isLoading = false;
+
+    RadzenDataGrid<AlertaDTO>? alertasGrid;
+
+    private AlertaDTO? Alerta;
+
+    IEnumerable<AlertaDTO> alertas = new List<AlertaDTO>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await ShowLoading();
+        try
+        {
+          
+            await CarregarAlertas();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            NavigationManager.NavigateTo("logout");
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os pacientes : {ex.Message}";
+        }
+    }
+    async Task ShowLoading()
+    {
+        isLoading = true;
+
+        await Task.Yield();
+
+        isLoading = false;
+    }
+    async Task CarregarAlertas()
+    {
+        try
+        {
+            alertas = await _alertaService.GetAlertasByMesAno(DateTime.Now.Month, DateTime.Now.Year);
+        }
+        catch (UnauthorizedAccessException)
+        {
+
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao carregar os alertas : {ex.Message}";
+        }
+    }
+}

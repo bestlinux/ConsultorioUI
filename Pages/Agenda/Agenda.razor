@@ -1,12 +1,13 @@
-﻿@page "/"
+﻿@page "/agendas"
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 @inject DialogService DialogService
+@inject TooltipService TooltipService
 @inject IAgendaService _agendaService
 
 <RadzenScheduler @ref=@scheduler SlotRender=@OnSlotRender style="height: 768px;" TItem="AgendaDTO" Data=@appointments StartProperty="InicioSessao" EndProperty="FimSessao"
                  TextProperty="PacienteNome" SelectedIndex="1"
-                 SlotSelect=@OnSlotSelect AppointmentSelect=@OnAppointmentSelect AppointmentRender=@OnAppointmentRender>
+                 SlotSelect=@OnSlotSelect AppointmentSelect=@OnAppointmentSelect AppointmentRender=@OnAppointmentRender AppointmentMouseEnter=@OnAppointmentMouseEnter AppointmentMouseLeave=@OnAppointmentMouseLeave>
     <RadzenDayView />
     <RadzenWeekView />
     <RadzenMonthView />
@@ -20,15 +21,6 @@
     bool isLoading = false;
 
     IList<AgendaDTO> appointments = new List<AgendaDTO>();
-    /*{
-    new AgendaDTO { InicioSessao = DateTime.Today.AddDays(-2), FimSessao = DateTime.Today.AddDays(-2), PacienteNome = "Birthday" },
-    new AgendaDTO { InicioSessao = DateTime.Today.AddDays(-11), FimSessao = DateTime.Today.AddDays(-10), PacienteNome = "Day off" },
-    new AgendaDTO { InicioSessao = DateTime.Today.AddDays(-10), FimSessao = DateTime.Today.AddDays(-8), PacienteNome = "Work from home" },
-    new AgendaDTO { InicioSessao = DateTime.Today.AddHours(10), FimSessao = DateTime.Today.AddHours(12), PacienteNome = "Online meeting" },
-    new AgendaDTO { InicioSessao = DateTime.Today.AddHours(10), FimSessao = DateTime.Today.AddHours(13), PacienteNome = "Skype call" },
-    new AgendaDTO { InicioSessao = DateTime.Today.AddHours(14), FimSessao = DateTime.Today.AddHours(14).AddMinutes(30), PacienteNome = "Dentist appointment" },
-    new AgendaDTO { InicioSessao = DateTime.Today.AddDays(1), FimSessao = DateTime.Today.AddDays(12), PacienteNome = "Vacation" },
-    };*/
 
     async Task ShowBusyDialogLogout()
     {
@@ -102,15 +94,16 @@
         // Highlight today in month view
         if (args.View.Text == "Month" && args.Start.Date == DateTime.Today)
         {
-            args.Attributes["style"] = "background: rgba(255,220,40,.2);";
+            //args.Attributes["style"] = "background: rgba(255,220,40,.2);";
         }
 
         // Highlight working hours (9-18)
         if ((args.View.Text == "Week" || args.View.Text == "Day") && args.Start.Hour > 8 && args.Start.Hour < 19)
         {
-            args.Attributes["style"] = "background: rgba(255,220,40,.2);";
+            //args.Attributes["style"] = "background: rgba(255,220,40,.2);";
         }
     }
+
 
     async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
     {
@@ -135,34 +128,38 @@
     {
         //console.Log($"AppointmentSelect: Appointment={args.Data.Text}");
 
-        var copy = new AgendaDTO
-            {
-                InicioSessao = args.Data.InicioSessao,
-                FimSessao = args.Data.FimSessao,
-                PacienteNome = args.Data.PacienteNome,
-                ValorSessao = args.Data.ValorSessao,
-                TipoConsulta = args.Data.TipoConsulta,
-                StatusConsulta = args.Data.StatusConsulta,
-                PacienteId = args.Data.PacienteId,
-                Id = args.Data.Id
-            };
-
-        var data = await DialogService.OpenAsync<EditarAgendamento>("Editar Agendamento", new Dictionary<string, object> { { "Agendamento", copy } });
-
-        if (data != null)
+        //SE NÃO FOR ANIVERSÁRIO
+        if (args.Data.TipoConsulta != 4)
         {
-            // Update the appointment
-            args.Data.InicioSessao = data.InicioSessao;
-            args.Data.FimSessao = data.FimSessao;
-            args.Data.PacienteNome = data.PacienteNome;
-            args.Data.ValorSessao = data.ValorSessao;
-            args.Data.TipoConsulta = data.TipoConsulta;
-            args.Data.StatusConsulta = data.StatusConsulta;
-            args.Data.PacienteId = data.PacienteId;
-            args.Data.Id = data.Id;
-        }
+            var copy = new AgendaDTO
+                {
+                    InicioSessao = args.Data.InicioSessao,
+                    FimSessao = args.Data.FimSessao,
+                    PacienteNome = args.Data.PacienteNome,
+                    ValorSessao = args.Data.ValorSessao,
+                    TipoConsulta = args.Data.TipoConsulta,
+                    StatusConsulta = args.Data.StatusConsulta,
+                    PacienteId = args.Data.PacienteId,
+                    Id = args.Data.Id
+                };
 
-        await scheduler.Reload();
+            var data = await DialogService.OpenAsync<EditarAgendamento>("Editar Agendamento", new Dictionary<string, object> { { "Agendamento", copy } });
+
+            if (data != null)
+            {
+                // Update the appointment
+                args.Data.InicioSessao = data.InicioSessao;
+                args.Data.FimSessao = data.FimSessao;
+                args.Data.PacienteNome = data.PacienteNome;
+                args.Data.ValorSessao = data.ValorSessao;
+                args.Data.TipoConsulta = data.TipoConsulta;
+                args.Data.StatusConsulta = data.StatusConsulta;
+                args.Data.PacienteId = data.PacienteId;
+                args.Data.Id = data.Id;
+            }
+
+            await scheduler.Reload();
+        }
     }
 
     void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<AgendaDTO> args)
@@ -181,5 +178,54 @@
         {
             args.Attributes["style"] = "background: green";
         }
+
+        //ANIVERSARIO
+        if (args.Data.TipoConsulta == 4)
+        {
+            args.Attributes["style"] = "background: pink";
+        }
+    }
+
+    void OnAppointmentMouseEnter(SchedulerAppointmentMouseEventArgs<AgendaDTO> args)
+    {
+        if (args.Data.TipoConsulta != 4)
+        {
+            TooltipService.Open(args.Element, ts =>
+            @<RadzenStack Orientation="Orientation.Vertical" Gap="0" Class="rz-p-6" Style="min-width: 250px; max-width: 500px;">
+                <RadzenText TextStyle="TextStyle.H4" Class="rz-mb-4" Style="color: var(--rz-tooltip-color);">
+                    @args.Data.PacienteNome
+                </RadzenText>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="4px">
+                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-tooltip-color); width: 44px;">
+                        <strong>Inicio</strong>
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-tooltip-color);">
+                           @args.Data.InicioSessao.ToString("dddd, dd MMMM yyyy hh:mm tt")
+                    </RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="4px">
+                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-tooltip-color); width: 44px;">
+                        <strong>Fim</strong>
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-tooltip-color);">
+                        @args.Data.FimSessao.ToString("dddd, dd MMMM yyyy hh:mm tt")
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+            , new TooltipOptions { Position = TooltipPosition.Right, Duration = null });
+        }
+        else
+        {
+            TooltipService.Open(args.Element, ts =>
+            @<RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                <RadzenImage Path="images/aniversario.png" Style="width: 10rem;" AlternateText="aniversario" />
+            </RadzenStack>
+            , new TooltipOptions { Position = TooltipPosition.Bottom, Duration = null });
+        }
+    }
+
+    void OnAppointmentMouseLeave(SchedulerAppointmentMouseEventArgs<AgendaDTO> args)
+    {
+        TooltipService.Close();
     }
 }
