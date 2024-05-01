@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using ConsultorioUI.Services.Api;
 using Radzen;
 using ConsultorioUI.Services.Autentica;
+using System.Globalization;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -14,7 +15,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddHttpClient("apiconsultorio", options =>
 {
-    options.BaseAddress = new Uri("https://localhost:7020/");
+    options.BaseAddress = new Uri("https://localhost:8001/");
 }).AddHttpMessageHandler<CustomHttpHandler>();
 
 builder.Services.AddScoped<CustomHttpHandler>();
@@ -33,5 +34,8 @@ builder.Services.AddScoped<IPagamentoService, PagamentoService>();
 builder.Services.AddScoped<IAgendaService, AgendaService>();
 builder.Services.AddScoped<IProntuarioService, ProntuarioService>();
 builder.Services.AddScoped<IAlertaService, AlertaService>();
+
+CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("pt-BR");
+CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("pt-BR");
 
 await builder.Build().RunAsync();
