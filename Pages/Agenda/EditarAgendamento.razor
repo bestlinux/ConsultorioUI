@@ -53,6 +53,9 @@
         <div class="col">
             <RadzenNumeric Format="c" ShowUpDown="false" Name="ValorSessao" @bind-Value="model.ValorSessao" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" Visible=@PrimeiroAtendimento />
             <RadzenRequiredValidator Text="Valor da Sessão é obrigatório" Component="ValorSessao" />
+            <RadzenAlert @bind-Visible="ValorSessaoEmBranco" AllowClose="true" AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                O valor da sessão é obrigatório !
+            </RadzenAlert>
         </div>
     </div>
     <div class="row" style="margin-bottom: 16px">
@@ -91,6 +94,8 @@
 
     public bool PrimeiroAtendimento = true;
 
+    public bool ValorSessaoEmBranco = false;
+
     AgendaDTO model = new AgendaDTO();
 
     protected override async Task OnInitializedAsync()
@@ -102,7 +107,7 @@
             PrimeiroAtendimento = true;
     }
 
-    public async Task ValidaAtendimento(int TipoAtendimento)
+    public void ValidaAtendimento(int TipoAtendimento)
     {
         if (TipoAtendimento == 3)
             PrimeiroAtendimento = false;
@@ -137,10 +142,28 @@
     {
         try
         {
-            await _agendaService.UpdateAgenda(model);
-            Reset();
-            DialogService.Close(model);
-            MensagemErro = null;
+            if (model.StatusConsulta == 1 || model.StatusConsulta == 2)
+            {
+                if (model.ValorSessao == 0)
+                {
+                    ValorSessaoEmBranco = true;
+                }
+                else
+                {
+                    await _agendaService.UpdateAgenda(model);
+                    Reset();
+                    DialogService.Close(model);
+                    MensagemErro = null;
+                }
+            }
+            else
+            {
+                await _agendaService.UpdateAgenda(model);
+                Reset();
+                DialogService.Close(model);
+                MensagemErro = null;
+            }
+
         }
         catch (Exception ex)
         {

@@ -52,7 +52,7 @@
                 <Columns>
                     <RadzenDataGridColumn TItem="PagamentoDTO" Property="Paciente" Title="Paciente" Width="200px" Frozen="true">
                         <Template Context="pagamento">
-                            @String.Format("{0:d}", pagamento.Paciente.Nome)
+                            @String.Format("{0:d}", pagamento.PacienteNome)
                         </Template>
                         <FooterTemplate>
                             Total Pago <b><span style='color: var(--rz-success-dark)'>@String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C}", pagamentos.Sum(o => o.StatusPagamento == 1 ? o.Valor : 0))</span></b>
@@ -81,15 +81,15 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="PagamentoDTO" Property="Modalidade" Title="Modalidade" Width="200px">
                         <Template Context="pagamento">
-                            @if (pagamento.Paciente.TipoPagamento == 1)
+                            @if (pagamento.PacienteTipoPagamento == 1)
                             {
                                 <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Mensal")</span>
                             }
-                            else if (pagamento.Paciente.TipoPagamento == 2)
+                            else if (pagamento.PacienteTipoPagamento == 2)
                             {
                                 <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Avulso")</span>
                             }
-                            else if (pagamento.Paciente.TipoPagamento == 3)
+                            else if (pagamento.PacienteTipoPagamento == 3)
                             {
                                 <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Semanal")</span>
                             }
@@ -97,7 +97,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="PagamentoDTO" Property="DiaVencimento" Title="Dia Vencimento" Width="200px">
                         <Template Context="pagamento">
-                            @String.Format("{0:d}", pagamento.Paciente.DiaVencimento)
+                            @String.Format("{0:d}", pagamento.PacienteDiaVencimento)
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="PagamentoDTO" Property="Valor" Title="Valor" Width="200px">

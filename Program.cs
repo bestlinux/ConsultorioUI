@@ -15,7 +15,8 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddHttpClient("apiconsultorio", options =>
 {
-    options.BaseAddress = new Uri("https://localhost:8001/");
+    //options.BaseAddress = new Uri("https://localhost:8001/"); - Docker
+    options.BaseAddress = new Uri("https://localhost:7133/"); //APIGateway - Ocelot
 }).AddHttpMessageHandler<CustomHttpHandler>();
 
 builder.Services.AddScoped<CustomHttpHandler>();
@@ -38,4 +39,4 @@ builder.Services.AddScoped<IAlertaService, AlertaService>();
 CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("pt-BR");
 CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("pt-BR");
 
-await builder.Build().RunAsync();
+var app = builder.Build().RunAsync();

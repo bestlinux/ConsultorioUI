@@ -30,7 +30,7 @@ public class AuthService : IAuthService
             var loginAsJson = JsonSerializer.Serialize(loginModel);
             var requestContent = new StringContent(loginAsJson, Encoding.UTF8, "application/json");
 
-            var response = await httpClient.PostAsync("api/Users/Login", requestContent);
+            var response = await httpClient.PostAsync("gateway/user/login", requestContent);
 
            var loginResult = JsonSerializer.Deserialize<LoginResult>
                              (await response.Content.ReadAsStringAsync(),

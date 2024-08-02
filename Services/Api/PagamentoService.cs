@@ -11,7 +11,7 @@ namespace ConsultorioUI.Services.Api
     {
         private readonly IHttpClientFactory _httpClientFactory;
         public ILogger<PagamentoService> _logger;
-        private const string apiEndpoint = "/api/pagamentos/";
+        private const string apiEndpoint = "/gateway/pagamento";
         private readonly JsonSerializerOptions _options;
 
         private PagamentoDTO? pagamento;

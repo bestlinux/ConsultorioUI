@@ -16,7 +16,7 @@ namespace ConsultorioUI.Services.Api
     {
         private readonly IHttpClientFactory _httpClientFactory;
         public ILogger<PacienteService> _logger;
-        private const string apiEndpoint = "/api/pacientes/";
+        private const string apiEndpoint = "/gateway/paciente";
         private readonly JsonSerializerOptions _options;
 
         private PacienteDTO? paciente;

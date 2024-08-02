@@ -43,6 +43,29 @@
     </div>
     <div class="row" style="margin-bottom: 16px">
         <div class="col-md-3">
+            <RadzenLabel Text="Tipo da Recorrencia" />
+        </div>
+        <div class="col">
+            <RadzenRadioButtonList @bind-Value="model.TipoRecorrencia" TValue="int" Change=@(args => ValidaRecorrencia(model.TipoRecorrencia))>
+                <Items>
+                    <RadzenRadioButtonListItem Text="Semanal" Value="1" />
+                    <RadzenRadioButtonListItem Text="Quinzenal" Value="2" />
+                    <RadzenRadioButtonListItem Text="Mensal" Value="3" />
+                    <RadzenRadioButtonListItem Text="Nenhuma" Value="0" />
+                </Items>
+            </RadzenRadioButtonList>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Quantidade de recorrências" Visible=@AtivaRecorrencia />
+        </div>
+        <div class="col">
+            <RadzenNumeric ShowUpDown="false" TValue="int" @bind-Value="model.NumeroRecorrencias" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" Visible=@AtivaRecorrencia />
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
             <RadzenLabel Text="Hora Inicio" />
         </div>
         <div class="col">
@@ -77,6 +100,8 @@
 
     public bool PrimeiroAtendimento = true;
 
+    public bool AtivaRecorrencia = false;
+
     public AgendaDTO model = new AgendaDTO();
 
     IEnumerable<PacienteDTO> pacientes;
@@ -85,12 +110,20 @@
 
     public int PacienteID { get; set; }
 
-    public async Task ValidaAtendimento(int TipoAtendimento)
+    public void ValidaAtendimento(int TipoAtendimento)
     {
         if (TipoAtendimento == 3)
             PrimeiroAtendimento = false;
         else
             PrimeiroAtendimento = true;
+    }
+
+    public void ValidaRecorrencia(int TipoRecorrencia)
+    {
+        if (TipoRecorrencia == 0)
+            AtivaRecorrencia = false;
+        else
+            AtivaRecorrencia = true;
     }
 
     protected override async Task OnInitializedAsync()

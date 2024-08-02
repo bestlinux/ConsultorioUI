@@ -29,5 +29,9 @@
 
         public double ValorSessao { get; set; }
 
+        public int TipoRecorrencia { get; set; }
+
+        public int NumeroRecorrencias { get; set; }
+
     }
 }
