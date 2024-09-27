@@ -16,12 +16,8 @@
 
         public int? PacienteId { get; set; }
 
-        public string? PacienteNome { get; set; }
-
-        public int? PacienteTipoPagamento { get; set; }
-
-        public int? PacienteDiaVencimento { get; set; }
-
         public int Ano { get; set; }
+
+        public PacienteDTO? Paciente { get; set; }
     }
 }

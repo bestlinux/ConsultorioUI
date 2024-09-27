@@ -11,7 +11,7 @@ namespace ConsultorioUI.Services.Api
     {
         private readonly IHttpClientFactory _httpClientFactory;
         public ILogger<PagamentoService> _logger;
-        private const string apiEndpoint = "/gateway/pagamento";
+        private const string apiEndpoint = "/api/pagamentos";
         private readonly JsonSerializerOptions _options;
 
         private PagamentoDTO? pagamento;
@@ -76,7 +76,7 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
-                var caminho = $"search-pagamentos-paciente-mes-ano?PacienteID={PacienteID}&Mes={Mes}&Ano={Ano}";
+                var caminho = $"/search-pagamentos-paciente-mes-ano?PacienteID={PacienteID}&Mes={Mes}&Ano={Ano}";
                 var apiUrl = apiEndpoint + caminho;
 
                 var httpClient = _httpClientFactory.CreateClient("apiconsultorio");

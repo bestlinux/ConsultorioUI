@@ -11,5 +11,7 @@ namespace ConsultorioUI.Services.Api
         Task<List<AgendaDTO>> GetAgendas();
 
         Task<bool> DeleteAgenda(int id);
+
+        Task<bool> DeleteAgendaRecorrencia(int? pacienteID);
     }
 }

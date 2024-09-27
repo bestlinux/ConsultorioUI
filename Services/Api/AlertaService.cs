@@ -12,8 +12,6 @@ namespace ConsultorioUI.Services.Api
         private const string apiEndpoint = "/api/alertas/";
         private readonly JsonSerializerOptions _options;
 
-        private AlertaDTO? alerta;
-
         public AlertaService(IHttpClientFactory httpClientFactory,
         ILogger<AlertaService> logger)
         {

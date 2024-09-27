@@ -13,8 +13,7 @@
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="8">
                                 <RadzenTextBox Style="width: 100%;" Name="Nome" @bind-Value="@Paciente.Nome" class="w-100" />
-                                <RadzenRequiredValidator Component="Nome" Popup=true Text="O campo nome é obrigatório" Style="position: absolute" />
-                            </RadzenColumn>
+                             </RadzenColumn>
                         </RadzenRow>
                         <RadzenRow AlignItems="AlignItems.Center">
                             <RadzenColumn Size="12" SizeMD="4">
@@ -37,7 +36,6 @@
                             <RadzenColumn Size="12" SizeMD="8">
                                 <RadzenLabel Text="Selecione a Data" Component="RadzenDatePickerBindValue" Style="margin-right: 8px; vertical-align: middle;" />
                                 <RadzenDatePicker @bind-Value=@Paciente.DataNascimento Name="RadzenDatePickerBindValue" DateFormat="dd/MM/yyyy" />
-                                <RadzenRequiredValidator Component="RadzenDatePickerBindValue" Popup=true Text="A data de nascimento é obrigatória" Style="position: absolute" />
                             </RadzenColumn>
                         </RadzenRow>
                         <RadzenRow AlignItems="AlignItems.Center">
@@ -46,7 +44,6 @@
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="8">
                                 <RadzenMask Mask="(**) *****-****" CharacterPattern="[0-9]" Placeholder="(00) 00000-0000" Name="Telefone" @bind-Value=@Paciente.Telefone Style="width: 40%;" aria-label="Telefone" />
-                                <RadzenRequiredValidator Component="Telefone" Popup=true Text="O telefone é obrigatória" Style="position: absolute" />
                             </RadzenColumn>
                         </RadzenRow>
                         <RadzenRow AlignItems="AlignItems.Center">
@@ -55,8 +52,6 @@
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="8">
                                 <RadzenTextBox Name="Email" @bind-Value=@Paciente.Email class="w-100" />
-                                <RadzenRequiredValidator Component="Email" Text="O email é obrigatório" Popup=true Style="position: absolute" />
-                                <RadzenEmailValidator Component="Email" Text="Coloque um endereço de email válido" Popup=true Style="position: absolute" />
                             </RadzenColumn>
                         </RadzenRow>
                         <RadzenRow AlignItems="AlignItems.Center">
@@ -65,7 +60,6 @@
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="8">
                                 <RadzenMask Mask="***.***.***-**" CharacterPattern="[0-9]" Placeholder="000.000.000-00" Name="CPF" @bind-Value=@Paciente.CPF Style="width: 40%;" aria-label="CPF" />
-                                <RadzenRequiredValidator Component="CPF" Text="O CPF é obrigatório" Popup=true Style="position: absolute" />
                             </RadzenColumn>
                         </RadzenRow>
                         <RadzenTabs SelectedIndex="0">

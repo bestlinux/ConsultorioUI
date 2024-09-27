@@ -33,5 +33,7 @@
 
         public int NumeroRecorrencias { get; set; }
 
+        public bool EmailEnviado { get; set; }
+
     }
 }

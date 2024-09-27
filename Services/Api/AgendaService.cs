@@ -9,14 +9,15 @@ namespace ConsultorioUI.Services.Api
     public class AgendaService : IAgendaService
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        public ILogger<AgendaService> _logger;
+        public ILogger<AgendaService> _logger;      
         private const string apiEndpoint = "/api/agendas/";
         private readonly JsonSerializerOptions _options;
 
         private AgendaDTO? agenda;
 
         public AgendaService(IHttpClientFactory httpClientFactory,
-        ILogger<AgendaService> logger)
+        ILogger<AgendaService> logger,
+        Settings settings)
         {
             _httpClientFactory = httpClientFactory;
             _logger = logger;
@@ -118,6 +119,27 @@ namespace ConsultorioUI.Services.Api
             var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
 
             using (var response = await httpClient.DeleteAsync(apiEndpoint + id))
+            {
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    throw new UnauthorizedAccessException();
+                }
+            }
+            return false;
+        }
+
+        public async Task<bool> DeleteAgendaRecorrencia(int? pacienteID)
+        {
+            var caminho = $"delete-agenda-paciente-by-recorrencia?PacienteID={pacienteID}";
+            var apiUrl = apiEndpoint + caminho;
+
+            var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+
+            using (var response = await httpClient.DeleteAsync(apiUrl))
             {
                 if (response.IsSuccessStatusCode)
                 {

@@ -7,16 +7,23 @@ using ConsultorioUI.Services.Api;
 using Radzen;
 using ConsultorioUI.Services.Autentica;
 using System.Globalization;
+using System.Net.Http.Json;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
+var settings = new Settings();
+
+builder.Configuration.Bind(settings);
+builder.Services.AddSingleton(settings);
+
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 
 builder.Services.AddHttpClient("apiconsultorio", options =>
 {
-    //options.BaseAddress = new Uri("https://localhost:8001/"); - Docker
-    options.BaseAddress = new Uri("https://localhost:7133/"); //APIGateway - Ocelot
+    options.BaseAddress = new Uri("https://localhost:8001/");
+    //options.BaseAddress = new Uri("https://localhost:7020/"); //APIGateway - Ocelot
 }).AddHttpMessageHandler<CustomHttpHandler>();
 
 builder.Services.AddScoped<CustomHttpHandler>();

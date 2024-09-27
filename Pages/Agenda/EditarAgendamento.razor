@@ -41,7 +41,7 @@
                     <RadzenRadioButtonListItem Text="Atendido" Value="1" />
                     <RadzenRadioButtonListItem Text="Faltou" Value="2" />
                     <RadzenRadioButtonListItem Text="Desmarcado" Value="3" />
-                    <RadzenRadioButtonListItem Text="Nenhum" Value="0" />
+                    <RadzenRadioButtonListItem Text="Não atendido" Value="4" />
                 </Items>
             </RadzenRadioButtonList>
         </div>
@@ -77,12 +77,14 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-3"></div>
         <div class="col">
             <RadzenButton ButtonType="ButtonType.Submit" Text="Salvar" />
         </div>
         <div class="col">
             <RadzenButton class="form-control-color:red" ButtonStyle="ButtonStyle.Danger" Text="Excluir" Click="@(args => ConfirmDelete(model))" @onclick:stopPropagation="true" />
+        </div>
+        <div class="col">
+            <RadzenButton class="form-control-color:red" ButtonStyle="ButtonStyle.Danger" Text="Excluir recorrência" Click="@(args => ConfirmDeleteRecorrencia(model))" @onclick:stopPropagation="true" />
         </div>
     </div>
 </RadzenTemplateForm>
@@ -130,6 +132,22 @@
         if (confirmationResult == true)
         {
             bool result = await _agendaService.DeleteAgenda(agenda.Id);
+
+            if (result)
+            {
+                Reset();
+                DialogService.Close(model);
+            }
+        }
+    }
+
+    public async Task ConfirmDeleteRecorrencia(AgendaDTO agenda)
+    {
+        var confirmationResult = await this.DialogService.Confirm("Você deseja excluir a recorrência de agendamentos do paciente " + agenda.PacienteNome + " ?", "Agendamento", new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
+        if (confirmationResult == true)
+        {
+            var pacienteId = agenda.PacienteId;
+            bool result = await _agendaService.DeleteAgendaRecorrencia(pacienteId);
 
             if (result)
             {

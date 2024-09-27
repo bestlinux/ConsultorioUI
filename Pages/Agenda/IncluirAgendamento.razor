@@ -2,6 +2,7 @@
 @inject IPacienteService _pacienteService
 @inject IAgendaService _agendaService
 @inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
 
 @if (MensagemErro is not null)
 {
@@ -9,6 +10,7 @@
         @MensagemErro
     </RadzenAlert>
 }
+<RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Visible="@isLoading" />
 <RadzenTemplateForm TItem="AgendaDTO" Data="@model" Submit=@OnSubmit>
     <div class="row" style="margin-bottom: 16px">
         <div class="col-md-3">
@@ -48,9 +50,8 @@
         <div class="col">
             <RadzenRadioButtonList @bind-Value="model.TipoRecorrencia" TValue="int" Change=@(args => ValidaRecorrencia(model.TipoRecorrencia))>
                 <Items>
-                    <RadzenRadioButtonListItem Text="Semanal" Value="1" />
-                    <RadzenRadioButtonListItem Text="Quinzenal" Value="2" />
-                    <RadzenRadioButtonListItem Text="Mensal" Value="3" />
+                    <RadzenRadioButtonListItem Text="Semanal" Value="5" />
+                    <RadzenRadioButtonListItem Text="Quinzenal" Value="4" />
                     <RadzenRadioButtonListItem Text="Nenhuma" Value="0" />
                 </Items>
             </RadzenRadioButtonList>
@@ -102,13 +103,17 @@
 
     public bool AtivaRecorrencia = false;
 
-    public AgendaDTO model = new AgendaDTO();
+    public AgendaDTO model = new();
 
-    IEnumerable<PacienteDTO> pacientes;
+    public EmailAgendaDTO emailAgenda = new();
 
-    public PacienteDTO pacienteSelecionado;
+    IEnumerable<PacienteDTO>? pacientes;
+
+    public PacienteDTO? pacienteSelecionado;
 
     public int PacienteID { get; set; }
+
+    bool isLoading = false;
 
     public void ValidaAtendimento(int TipoAtendimento)
     {
@@ -154,14 +159,29 @@
     {
         try
         {
+            isLoading = true;
+
+            model.StatusConsulta = 4;
             model.PacienteId = PacienteID;
-            model.PacienteNome = GetNomePaciente(pacientes, PacienteID);
+
+            var pacienteNome = GetNomePaciente(pacientes, PacienteID);
+
+            model.PacienteNome = pacienteNome;
+            emailAgenda.PacienteNome = pacienteNome;
+            emailAgenda.InicioSessao = model.InicioSessao;
+            emailAgenda.FimSessao = model.FimSessao;
+            emailAgenda.NumeroRecorrencias = model.NumeroRecorrencias;
+            emailAgenda.TipoRecorrencia = model.TipoRecorrencia;
 
             //model.PacienteNome = 
-            await _agendaService.CreateAgenda(model);            
+            var agendaResult = await _agendaService.CreateAgenda(model);
+
+            if (agendaResult.EmailEnviado)
+                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Aviso", Detail = "Email de agendamento enviado com sucesso !", Duration = 4000 });
             //Reset();
             DialogService.Close(model);
             MensagemErro = null;
+            isLoading = false;
         }
         catch (Exception ex)
         {
@@ -172,6 +192,13 @@
     void Reset()
     {
         model = new AgendaDTO();
+    }
+
+    void ShowNotification(NotificationMessage message)
+    {
+        NotificationService.Notify(message);
+
+        //console.Log($"{message.Severity} notification");
     }
 
     async Task CarregarPacientes()
@@ -187,8 +214,7 @@
         }
     }
 
-    public string GetNomePaciente(IEnumerable<PacienteDTO> pacientes, int id)
-    {
-        return pacientes.First(c => c.Id == id).Nome;
-    }
+    public string GetNomePaciente(IEnumerable<PacienteDTO> pacientes, int id) => pacientes.First(c => c.Id == id).Nome;
+
+    public string GetEmailPaciente(IEnumerable<PacienteDTO> pacientes, int id) => pacientes.First(c => c.Id == id).Email;
 }

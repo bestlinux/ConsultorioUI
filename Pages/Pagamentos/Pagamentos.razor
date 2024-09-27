@@ -44,7 +44,7 @@
             </RadzenCard>
         </div>
         <div class="col-xl-3 mb-4">
-                <RadzenButton Shade="Shade.Lighter" Click=@(args => OnClick()) Text="Todos" ButtonStyle="ButtonStyle.Primary" />
+            <RadzenButton Shade="Shade.Lighter" Click=@(args => OnClick()) Text="Todos" ButtonStyle="ButtonStyle.Primary" />
         </div>
         <div class="col-12 mb-4">
             <RadzenDataGrid @ref="pagamentosGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="10" AllowSorting="true" EditMode="DataGridEditMode.Single" IsLoading=@isLoading
@@ -52,13 +52,13 @@
                 <Columns>
                     <RadzenDataGridColumn TItem="PagamentoDTO" Property="Paciente" Title="Paciente" Width="200px" Frozen="true">
                         <Template Context="pagamento">
-                            @String.Format("{0:d}", pagamento.PacienteNome)
+                            @String.Format("{0:d}", pagamento.Paciente!.Nome)
                         </Template>
                         <FooterTemplate>
                             Total Pago <b><span style='color: var(--rz-success-dark)'>@String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C}", pagamentos.Sum(o => o.StatusPagamento == 1 ? o.Valor : 0))</span></b>
                             Total Em Aberto <b><span style='color: var(--rz-danger-dark)'>@String.Format(new System.Globalization.CultureInfo("pt-BR"), "{0:C}", pagamentos.Sum(o => o.StatusPagamento == 2 ? o.Valor : 0))</span></b>
                         </FooterTemplate>
-                    </RadzenDataGridColumn>                   
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="PagamentoDTO" Property="StatusPagamento" Title="Status Pagamento" Width="200px">
                         <Template Context="pagamento">
                             @if (pagamento.StatusPagamento == 1)
@@ -68,7 +68,7 @@
                             else
                             {
                                 <span style='color: var(--rz-danger-dark)'>@String.Format("{0:d}", "Aberto")</span>
-                            }                           
+                            }
                         </Template>
                         <EditTemplate Context="pagamento">
                             <RadzenRadioButtonList @bind-Value="pagamento.StatusPagamento">
@@ -81,15 +81,15 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="PagamentoDTO" Property="Modalidade" Title="Modalidade" Width="200px">
                         <Template Context="pagamento">
-                            @if (pagamento.PacienteTipoPagamento == 1)
+                            @if (pagamento.Paciente!.TipoPagamento == 1)
                             {
                                 <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Mensal")</span>
                             }
-                            else if (pagamento.PacienteTipoPagamento == 2)
+                            else if (pagamento.Paciente!.TipoPagamento == 2)
                             {
                                 <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Avulso")</span>
                             }
-                            else if (pagamento.PacienteTipoPagamento == 3)
+                            else if (pagamento.Paciente!.TipoPagamento == 3)
                             {
                                 <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Semanal")</span>
                             }
@@ -97,7 +97,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="PagamentoDTO" Property="DiaVencimento" Title="Dia Vencimento" Width="200px">
                         <Template Context="pagamento">
-                            @String.Format("{0:d}", pagamento.PacienteDiaVencimento)
+                            @String.Format("{0:d}", pagamento.Paciente!.DiaVencimento)
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="PagamentoDTO" Property="Valor" Title="Valor" Width="200px">
@@ -106,7 +106,7 @@
                         </Template>
                         <EditTemplate Context="pagamento">
                             <RadzenNumeric Format="c" ShowUpDown="false" @bind-Value="pagamento.Valor" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "enter value" }})" />
-                        </EditTemplate>                        
+                        </EditTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="PagamentoDTO" Property="Mes" Title="Mes" Width="200px">
                         <Template Context="pagamento">
@@ -148,7 +148,7 @@
                                 case 12:
                                     <span style='color: var(--rz-info)'>@String.Format("{0:d}", "Dezembro")</span>
                                     break;
-                            }                           
+                            }
                         </Template>
                         <EditTemplate Context="pagamento">
                             <RadzenDropDown @bind-Value="pagamento.Mes" Placeholder="Selecione..." AllowFiltering="true" Data="@meses" Style="width: 100%;" TextProperty="Nome" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Selecione..." }})" ValueProperty="Id" Name="Nome">
@@ -292,7 +292,7 @@
                     }
                     else
                     {
-                        await CarregarPagamentos();                        
+                        await CarregarPagamentos();
                     }
                     await pagamentosGrid.Reload();
                 }
@@ -306,7 +306,7 @@
     }
     async Task CarregaPagamentosPorPacienteMesAno(int PacienteId, int MesId, int Ano)
     {
-        try 
+        try
         {
             pagamentos = await _pagamentoService.GetPagamentosByPacienteMesAno(PacienteID, MesId, Ano);
         }
@@ -344,6 +344,7 @@
         try
         {
             pagamentos = await _pagamentoService.GetPagamentos();
+            pagamentos = pagamentos.Where(pagamento => pagamento.Paciente != null);
         }
         catch (UnauthorizedAccessException)
         {
@@ -387,7 +388,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();       
+        await base.OnInitializedAsync();
         await ShowLoading();
         try
         {
@@ -411,7 +412,7 @@
             Reset();
             Pagamento.StatusPagamento = 1;
             var result = await DialogService.OpenAsync("Novo Pagamento", ds =>
-        @<RadzenTemplateForm Data="@Pagamento" TItem=PagamentoDTO Submit=@OnValidSubmit>
+    @<RadzenTemplateForm Data="@Pagamento" TItem=PagamentoDTO Submit=@OnValidSubmit>
         <RadzenRow Gap="2rem" Class="rz-p-0 rz-p-lg-4">
             <RadzenColumn Size="12" SizeMD="12">
                 <RadzenStack>
@@ -486,7 +487,7 @@
             </RadzenStack>
         </RadzenStack>
     </RadzenTemplateForm>
-    );
+        );
         }
         catch (Exception)
         {
@@ -574,7 +575,7 @@
     }
 
     List<Mes> meses = new List<Mes>()
-                {
+                    {
         new Mes() { Id = 1, Nome = "Janeiro" },
         new Mes() { Id = 2, Nome = "Fevereiro" },
         new Mes() { Id = 3, Nome = "Março" },
@@ -587,49 +588,49 @@
         new Mes() { Id = 10, Nome = "Outubro" },
         new Mes() { Id = 11, Nome = "Novembro" },
         new Mes() { Id = 12, Nome = "Dezembro" }
-                };
+                    };
 
     async Task ShowBusyDialogCriaPagamento(bool withMessageAsString, DialogService ds)
     {
         try
         {
             InvokeAsync(async () =>
+        {
+            try
             {
-                try
-                {
-                    // Simulate background task
-                    await _pagamentoService.CreatePagamento(Pagamento);
-                    //busy = false;
+                // Simulate background task
+                await _pagamentoService.CreatePagamento(Pagamento);
+                //busy = false;
 
-                    // Close the dialog
-                    DialogService.Close();
+                // Close the dialog
+                DialogService.Close();
 
-                    Reset();
-                    ds.Close();
-                }
-                catch (Exception ex)
-                {
-                    MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
-                    DialogService.Close();
-                    //DialogService.Alert(MensagemErro, "ERRO", new AlertOptions() { OkButtonText = "Fechar" });
-                    await DialogService.OpenAsync("ERRO", ds =>
-                    @<div>
-                        @MensagemErro
-                    </div>, new DialogOptions()
-                      {
-                          Style = "color:red"
-                      });
-                }
-                });
+                Reset();
+                ds.Close();
+            }
+            catch (Exception ex)
+            {
+                MensagemErro = $"Erro ao salvar o paciente : {ex.Message}";
+                DialogService.Close();
+                //DialogService.Alert(MensagemErro, "ERRO", new AlertOptions() { OkButtonText = "Fechar" });
+                await DialogService.OpenAsync("ERRO", ds =>
+    @<div>
+        @MensagemErro
+    </div>, new DialogOptions()
+              {
+                  Style = "color:red"
+              });
+            }
+        });
 
-                if (withMessageAsString)
-                {
-                    await BusyDialog("Busy ...");
-                }
-                else
-                {
-                    await BusyDialog();
-                }
+            if (withMessageAsString)
+            {
+                await BusyDialog("Busy ...");
+            }
+            else
+            {
+                await BusyDialog();
+            }
         }
         catch (Exception ex)
         {
@@ -641,10 +642,10 @@
     async Task BusyDialog()
     {
         await DialogService.OpenAsync("", ds =>
-        @<RadzenStack AlignItems="AlignItems.Center" Gap="2rem" Class="rz-p-12">
-            <RadzenImage Path="images/community.svg" Style="width: 200px;" AlternateText="community" />
-            <RadzenText TextStyle="TextStyle.H6">Por favor, aguarde...</RadzenText>
-        </RadzenStack>
+    @<RadzenStack AlignItems="AlignItems.Center" Gap="2rem" Class="rz-p-12">
+        <RadzenImage Path="images/community.svg" Style="width: 200px;" AlternateText="community" />
+        <RadzenText TextStyle="TextStyle.H6">Por favor, aguarde...</RadzenText>
+    </RadzenStack>
         , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
     }
 
