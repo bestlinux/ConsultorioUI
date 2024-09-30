@@ -13,5 +13,6 @@
         public int? NumeroRecorrencias { get; set; }
 
         public int? TipoRecorrencia { get; set; }
+
     }
 }

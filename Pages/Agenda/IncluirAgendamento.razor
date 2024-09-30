@@ -83,6 +83,15 @@
             <RadzenRequiredValidator Component="FimSessao" Text="Data fim é obrigatória" />
         </div>
     </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Deseja enviar email para agendamento ?" />
+        </div>
+        <div class="col">
+            <RadzenCheckBox @bind-Value=@emailAgendamento Name="EmailAgendamento" />
+            <RadzenLabel Text="" Component="EmailAgendamento" class="rz-ms-2" />
+        </div>
+    </div>
     <div class="row">
         <div class="col-md-3"></div>
         <div class="col">
@@ -113,7 +122,9 @@
 
     public int PacienteID { get; set; }
 
-    bool isLoading = false;
+    public bool isLoading = false;
+
+    public bool emailAgendamento;
 
     public void ValidaAtendimento(int TipoAtendimento)
     {
@@ -167,6 +178,7 @@
             var pacienteNome = GetNomePaciente(pacientes, PacienteID);
 
             model.PacienteNome = pacienteNome;
+            model.EmailAgendamento = emailAgendamento;
             emailAgenda.PacienteNome = pacienteNome;
             emailAgenda.InicioSessao = model.InicioSessao;
             emailAgenda.FimSessao = model.FimSessao;
@@ -178,6 +190,8 @@
 
             if (agendaResult.EmailEnviado)
                 ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Aviso", Detail = "Email de agendamento enviado com sucesso !", Duration = 4000 });
+            else
+                ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Aviso", Detail = "Agendamento cadastrado com sucesso, porém, o email não foi enviado !", Duration = 4000 });
             //Reset();
             DialogService.Close(model);
             MensagemErro = null;

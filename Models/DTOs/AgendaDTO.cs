@@ -35,5 +35,7 @@
 
         public bool EmailEnviado { get; set; }
 
+        public bool EmailAgendamento { get; set; }
+
     }
 }
