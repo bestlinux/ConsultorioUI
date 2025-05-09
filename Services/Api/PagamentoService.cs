@@ -137,7 +137,7 @@ namespace ConsultorioUI.Services.Api
         {
             var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
 
-            using (var response = await httpClient.DeleteAsync(apiEndpoint + id))
+            using (var response = await httpClient.DeleteAsync("/api/pagamentos/" + id))
             {
                 if (response.IsSuccessStatusCode)
                 {

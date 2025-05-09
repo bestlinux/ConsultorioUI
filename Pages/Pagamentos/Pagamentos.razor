@@ -282,18 +282,8 @@
 
                 if (result)
                 {
-                    if (MesID != 0)
-                    {
-                        await CarregaPagamentosPorPacienteMesAno(PacienteID, MesID, Ano);
-                    }
-                    else if (MesID == 0 || MesID == -1 && Ano != 0)
-                    {
-                        await CarregarPagamentosPorPacienteAno(PacienteID);
-                    }
-                    else
-                    {
-                        await CarregarPagamentos();
-                    }
+                    await CarregarPagamentos();
+                    
                     await pagamentosGrid.Reload();
                 }
             }
@@ -304,11 +294,18 @@
             }
         }
     }
-    async Task CarregaPagamentosPorPacienteMesAno(int PacienteId, int MesId, int Ano)
+    async Task CarregaPagamentosPorPacienteMesAno(int? PacienteId, int MesId, int Ano)
     {
         try
         {
-            pagamentos = await _pagamentoService.GetPagamentosByPacienteMesAno(PacienteID, MesId, Ano);
+            int PacienteIdParam = 0;
+
+            if (PacienteId != 0 && PacienteId != null)
+            {
+                PacienteIdParam = (int) PacienteId;
+            }
+
+            pagamentos = await _pagamentoService.GetPagamentosByPacienteMesAno(PacienteIdParam, MesId, Ano);
         }
         catch (Exception e)
         {
@@ -547,7 +544,7 @@
         }
     }
 
-    async Task CarregarPagamentosPorPacienteAno(int PacienteID)
+    async Task CarregarPagamentosPorPacienteAno(int? PacienteID)
     {
         if (Ano.ToString().Length != 4)
             ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Aviso", Detail = "Por favor, informe um ano valido", Duration = 4000 });
