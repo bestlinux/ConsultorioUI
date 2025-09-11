@@ -191,7 +191,7 @@
             emailAgenda.NumeroRecorrencias = model.NumeroRecorrencias;
             emailAgenda.TipoRecorrencia = model.TipoRecorrencia;
 
-            //model.PacienteNome = 
+            //model.PacienteNome = teste
             var agendaResult = await _agendaService.CreateAgenda(model);
 
             if (agendaResult.EmailEnviado)
