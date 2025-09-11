@@ -177,8 +177,14 @@
 
             var pacienteNome = GetNomePaciente(pacientes, PacienteID);
 
+            var cpfPagador = GetCPFPagador(pacientes, PacienteID);
+
+            var cpf = GetCPF(pacientes, PacienteID);
+
             model.PacienteNome = pacienteNome;
             model.EmailAgendamento = emailAgendamento;
+            model.CPFPagador = cpfPagador;
+            model.CPF = cpf;
             emailAgenda.PacienteNome = pacienteNome;
             emailAgenda.InicioSessao = model.InicioSessao;
             emailAgenda.FimSessao = model.FimSessao;
@@ -229,6 +235,10 @@
     }
 
     public string GetNomePaciente(IEnumerable<PacienteDTO> pacientes, int id) => pacientes.First(c => c.Id == id).Nome;
+
+    public string GetCPFPagador(IEnumerable<PacienteDTO> pacientes, int id) => pacientes.First(c => c.Id == id).CPFPagador;
+
+    public string GetCPF(IEnumerable<PacienteDTO> pacientes, int id) => pacientes.First(c => c.Id == id).CPF;
 
     public string GetEmailPaciente(IEnumerable<PacienteDTO> pacientes, int id) => pacientes.First(c => c.Id == id).Email;
 }

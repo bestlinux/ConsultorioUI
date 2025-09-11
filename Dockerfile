@@ -1,8 +1,4 @@
 ﻿FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-
-EXPOSE 8080
-EXPOSE 8081
-
 WORKDIR /src
 
 # copy csproj and restore as distinct layers
@@ -19,3 +15,5 @@ FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
 COPY --from=publish /app/publish/wwwroot .
 COPY nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80

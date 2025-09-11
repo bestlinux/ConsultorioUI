@@ -15,6 +15,10 @@
 
         public string? PacienteNome { get; set; }
 
+        public string? CPFPagador { get; set; }
+
+        public string? CPF { get; set; }
+
         //1 - PRIMEIRO ATENDIMENTO
         //2 - CONSULTA ONLINE
         //3 - CONSULTA PRESENCIAL

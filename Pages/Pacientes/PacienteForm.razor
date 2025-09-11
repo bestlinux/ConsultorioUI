@@ -62,6 +62,14 @@
                                 <RadzenMask Mask="***.***.***-**" CharacterPattern="[0-9]" Placeholder="000.000.000-00" Name="CPF" @bind-Value=@Paciente.CPF Style="width: 40%;" aria-label="CPF" />
                             </RadzenColumn>
                         </RadzenRow>
+                        <RadzenRow AlignItems="AlignItems.Center">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenLabel Text="CPF Pagador" Component="CPF" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="8">
+                                <RadzenMask Mask="***.***.***-**" CharacterPattern="[0-9]" Placeholder="000.000.000-00" Name="CPFPagador" @bind-Value=@Paciente.CPFPagador Style="width: 40%;" aria-label="CPFPagador" />
+                            </RadzenColumn>
+                        </RadzenRow>
                         <RadzenTabs SelectedIndex="0">
                             <Tabs>
                                 <RadzenTabsItem Text="Endereço">
@@ -80,7 +88,7 @@
                                                 <RadzenLabel Text="CEP" Component="CEP" />
                                             </RadzenColumn>
                                             <RadzenColumn Size="12" SizeMD="8">
-                                                <RadzenMask Mask="*****-***" CharacterPattern="[0-9]" Placeholder="00000-000" Name="EP" @bind-Value=@Paciente.CEP Style="width: 40%;" aria-label="CEP" Change=@(args => OnChange(args, "TextBox with placeholder")) />
+                                                <RadzenMask Mask="*****-***" CharacterPattern="[0-9]" Placeholder="00000-000" Name="EP" @bind-Value=@Paciente.CEP Style="width: 40%;" aria-label="CEP" />
                                                 <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Visible="@isLoading" />
                                             </RadzenColumn>
                                         </RadzenRow>

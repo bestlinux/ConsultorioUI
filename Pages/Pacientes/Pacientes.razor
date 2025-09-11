@@ -57,6 +57,11 @@
                 <RadzenMask Mask="***.***.***-**" CharacterPattern="[0-9]" Placeholder="000.000.000-00" Name="CPF" @bind-Value=@order.CPF Style="width: 100%;" aria-label="CPF" />
             </EditTemplate>
         </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="PacienteDTO" Property="CPFPagador" Title="CPF Pagador">
+            <EditTemplate Context="order">
+                <RadzenMask Mask="***.***.***-**" CharacterPattern="[0-9]" Placeholder="000.000.000-00" Name="CPF" @bind-Value=@order.CPFPagador Style="width: 100%;" aria-label="CPFPagador" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="PacienteDTO" Property="Ativo" Title="Ativo" Width="60px">
             <Template Context="order">
                 @if (order.Ativo == 1)

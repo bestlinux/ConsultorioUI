@@ -22,8 +22,8 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddHttpClient("apiconsultorio", options =>
 {
-    options.BaseAddress = new Uri("https://localhost:8001/");
-    //options.BaseAddress = new Uri("https://localhost:7020/"); //APIGateway - Ocelot
+    options.BaseAddress = new Uri("https://localhost:7020/");
+    //options.BaseAddress = new Uri("https://consultoriopsicoapi-cfffcrh2e9dbfuf4.canadacentral-01.azurewebsites.net"); //APIGateway - Ocelot
 }).AddHttpMessageHandler<CustomHttpHandler>();
 
 builder.Services.AddScoped<CustomHttpHandler>();
