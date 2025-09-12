@@ -1,5 +1,4 @@
 ﻿using ConsultorioUI.Models.DTOs;
-using Correios.NET;
 using System.Net.Http.Json;
 using System.Net.Http;
 using System.Net;
@@ -7,7 +6,6 @@ using System.Text;
 using System;
 using System.Reflection.Metadata;
 using System.Text.Json;
-using AngleSharp.Io;
 using System.Runtime.ConstrainedExecution;
 
 namespace ConsultorioUI.Services.Api
