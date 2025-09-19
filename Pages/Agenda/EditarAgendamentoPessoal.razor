@@ -1,0 +1,138 @@
+﻿@inject DialogService DialogService
+@inject IAgendaService _agendaService
+
+@if (MensagemErro is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        @MensagemErro
+    </RadzenAlert>
+}
+
+<RadzenTemplateForm TItem="AgendaDTO" Data="@model" Submit=@OnSubmit>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Categoria Agendamento" />
+        </div>
+        <div class="col">
+            <RadzenDropDown TValue="int" @bind-Value="CategoriaAgendamentoID" Placeholder="Selecione..." AllowFiltering="true" Data="@listCategoriaAgendamento" Style="width: 100%;" TextProperty="Nome" InputAttributes="@(new Dictionary<string, object>() { { "aria-label", "Selecione..." } })" ValueProperty="Id" Name="Nome">
+            </RadzenDropDown>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Observação" />
+        </div>
+        <div class="col">
+            <RadzenTextArea @bind-Value=@Observacoes Style="width: 100%" aria-label="TextArea" />
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Inicio" />
+        </div>
+        <div class="col">
+            <RadzenDatePicker @bind-Value="@model.InicioSessao" Name="InicioSessao" ShowTime="true" />
+            <RadzenRequiredValidator Text="Start is required" Component="InicioSessao" />
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Fim" />
+        </div>
+        <div class="col">
+            <RadzenDatePicker Name="FimSessao" @bind-Value="@model.FimSessao" ShowTime="true" />
+            <RadzenRequiredValidator Component="FimSessao" Text="End is required" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Salvar" />
+        </div>
+        <div class="col">
+            <RadzenButton class="form-control-color:red" ButtonStyle="ButtonStyle.Danger" Text="Excluir" Click="@(args => ConfirmDelete(model))" @onclick:stopPropagation="true" />
+        </div>
+        <div class="col">
+            <RadzenButton class="form-control-color:red" ButtonStyle="ButtonStyle.Danger" Text="Excluir recorrência" Click="@(args => ConfirmDeleteRecorrencia(model))" @onclick:stopPropagation="true" />
+        </div>
+    </div>
+</RadzenTemplateForm>
+@code {
+    public string? MensagemErro { get; set; }
+
+    [Parameter]
+    public AgendaDTO Agendamento { get; set; }
+
+    AgendaDTO model = new AgendaDTO();
+
+    public int CategoriaAgendamentoID { get; set; }
+
+    public string? Observacoes { get; set; }
+
+    List<CategoriaAgendamento> listCategoriaAgendamento = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        CategoriaAgendamentoID = Agendamento.CategoriaAgendamento ?? 0;
+        Observacoes = Agendamento.Observacoes;
+        listCategoriaAgendamento = CategoriaAgendamento.GetCategoriaAgendamento();
+    }
+
+    protected override void OnParametersSet()
+    {
+        model = Agendamento;
+    }
+    void Reset()
+    {
+        model = new AgendaDTO();
+    }
+
+    public async Task ConfirmDelete(AgendaDTO agenda)
+    {
+        var confirmationResult = await this.DialogService.Confirm("Você deseja excluir o agendamento ?", "Agendamento", new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
+        if (confirmationResult == true)
+        {
+            bool result = await _agendaService.DeleteAgenda(agenda.Id);
+
+            if (result)
+            {
+                Reset();
+                DialogService.Close(model);
+            }
+        }
+    }
+
+    public async Task ConfirmDeleteRecorrencia(AgendaDTO agenda)
+    {
+        var confirmationResult = await this.DialogService.Confirm("Você deseja excluir a recorrência de agendamentos ?", "Agendamento", new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
+        if (confirmationResult == true)
+        {
+            var categoriaAgendamentoId = agenda.CategoriaAgendamento;
+            bool result = await _agendaService.DeleteAgendaPessoalRecorrencia(categoriaAgendamentoId);
+
+            if (result)
+            {
+                Reset();
+                DialogService.Close(model);
+            }
+        }
+    }
+    public async void OnSubmit(AgendaDTO model)
+    {
+        try
+        {
+            model.CategoriaAgendamento = CategoriaAgendamentoID;
+            model.Observacoes = Observacoes;
+            await _agendaService.UpdateAgenda(model);
+            Reset();
+            DialogService.Close(model);
+            MensagemErro = null;
+
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao atualizar o agendamento : {ex.Message}";
+            DialogService.Refresh();
+        }
+    }
+}

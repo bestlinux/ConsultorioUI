@@ -6,7 +6,7 @@
 @inject IAgendaService _agendaService
 
 <RadzenScheduler @ref=@scheduler SlotRender=@OnSlotRender style="height: 768px;" TItem="AgendaDTO" Data=@appointments StartProperty="InicioSessao" EndProperty="FimSessao"
-                 TextProperty="PacienteNome" SelectedIndex="1"
+                 TextProperty="TextoAgenda" SelectedIndex="1"
                  SlotSelect=@OnSlotSelect AppointmentSelect=@OnAppointmentSelect AppointmentRender=@OnAppointmentRender AppointmentMouseEnter=@OnAppointmentMouseEnter AppointmentMouseLeave=@OnAppointmentMouseLeave>
     <RadzenDayView />
     <RadzenWeekView />
@@ -32,10 +32,10 @@
     {
         await DialogService.OpenAsync("", ds =>
     @<RadzenStack AlignItems="AlignItems.Center" Gap="2rem" Class="rz-p-12">
-        <RadzenImage Path="images/community.svg" Style="width: 200px;" AlternateText="community" />
-        <RadzenText TextStyle="TextStyle.H6">Sua sessão expirou, por favor, refaça o login</RadzenText>
-        <RadzenButton Click=@(args => RefazerLogin(ds)) Text="Sair" ButtonStyle="ButtonStyle.Primary" />
-    </RadzenStack>
+    <RadzenImage Path="images/community.svg" Style="width: 200px;" AlternateText="community" />
+    <RadzenText TextStyle="TextStyle.H6">Sua sessão expirou, por favor, refaça o login</RadzenText>
+    <RadzenButton Click=@(args => RefazerLogin(ds)) Text="Sair" ButtonStyle="ButtonStyle.Primary" />
+</RadzenStack>
     , new DialogOptions() { ShowTitle = false, Style = "min-height:auto;min-width:auto;width:auto", CloseDialogOnEsc = false });
     }
 
@@ -50,6 +50,17 @@
         try
         {
             appointments = await _agendaService.GetAgendas();
+
+            foreach (var appt in appointments)
+            {
+                // Se PacienteID tiver valor => Profissional; se for null => Pessoal
+                appt.TextoAgenda = appt.PacienteId.HasValue
+                    ? appt.PacienteNome
+                    : CategoriaAgendamentoExtensions.ObterNomePorIdObrigatorio(
+                        CategoriaAgendamento.GetCategoriaAgendamento(),
+                        appt.CategoriaAgendamento ?? 0 // Corrigido: usa 0 se for null
+                    );
+            }
         }
         catch (UnauthorizedAccessException)
         {
@@ -109,41 +120,63 @@
     {
         //console.Log($"SlotSelect: Start={args.Start} End={args.End}");
 
-        if (args.View.Text != "Year")
-        {
-            AgendaDTO data = await DialogService.OpenAsync<IncluirAgendamento>("Incluir agendamento",
-                new Dictionary<string, object> { { "InicioSessao", args.Start }, { "FimSessao", args.End } });
+        var confirmationResult = await this.DialogService.Confirm("Qual tipo de agendamento você deseja ?", "Agenda", new ConfirmOptions { OkButtonText = "Profissional", CancelButtonText = "Pessoal" });
 
-            if (data != null)
+        if (confirmationResult == true)
+        {
+            if (args.View.Text != "Year")
             {
-                appointments.Add(data);
-                // Either call the Reload method or reassign the Data property of the Scheduler
-                await CarregarAgenda();
-                await scheduler.Reload();
+                AgendaDTO data = await DialogService.OpenAsync<IncluirAgendamento>("Incluir agendamento",
+                    new Dictionary<string, object> { { "InicioSessao", args.Start }, { "FimSessao", args.End } });
+
+                if (data != null)
+                {
+                    appointments.Add(data);
+                    // Either call the Reload method or reassign the Data property of the Scheduler
+                    await CarregarAgenda();
+                    await scheduler.Reload();
+                }
             }
         }
+        else if (confirmationResult == false)
+        {
+            if (args.View.Text != "Year")
+            {
+                AgendaDTO data = await DialogService.OpenAsync<IncluirAgendamentoPessoal>("Incluir agendamento pessoal",
+                    new Dictionary<string, object> { { "InicioSessao", args.Start }, { "FimSessao", args.End } });
+
+                if (data != null)
+                {
+                    appointments.Add(data);
+                    // Either call the Reload method or reassign the Data property of the Scheduler
+                    await CarregarAgenda();
+                    await scheduler.Reload();
+                }
+            }
+        }
+
     }
 
     async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<AgendaDTO> args)
     {
         //console.Log($"AppointmentSelect: Appointment={args.Data.Text}");
 
-        //SE NÃO FOR ANIVERSÁRIO
-        if (args.Data.TipoConsulta != 4)
+        //SE NÃO FOR ANIVERSÁRIO E FOR AGENDAMENTO PROFISSIONAL
+        if (args.Data.TipoConsulta != 4 && args.Data.CategoriaAgendamento == null)
         {
             var copy = new AgendaDTO
-                {
-                    InicioSessao = args.Data.InicioSessao,
-                    FimSessao = args.Data.FimSessao,
-                    PacienteNome = args.Data.PacienteNome,
-                    ValorSessao = args.Data.ValorSessao,
-                    TipoConsulta = args.Data.TipoConsulta,
-                    StatusConsulta = args.Data.StatusConsulta,
-                    PacienteId = args.Data.PacienteId,
-                    CPFPagador = args.Data.CPFPagador,
-                    CPF = args.Data.CPF,
-                    Id = args.Data.Id
-                };
+            {
+                InicioSessao = args.Data.InicioSessao,
+                FimSessao = args.Data.FimSessao,
+                PacienteNome = args.Data.PacienteNome,
+                ValorSessao = args.Data.ValorSessao,
+                TipoConsulta = args.Data.TipoConsulta,
+                StatusConsulta = args.Data.StatusConsulta,
+                PacienteId = args.Data.PacienteId,
+                CPFPagador = args.Data.CPFPagador,
+                CPF = args.Data.CPF,
+                Id = args.Data.Id
+            };
 
             var data = await DialogService.OpenAsync<EditarAgendamento>("Editar Agendamento", new Dictionary<string, object> { { "Agendamento", copy } });
 
@@ -165,11 +198,39 @@
             await scheduler.Reload();
             await CarregarAgenda();
         }
+        else
+        {
+            var copy = new AgendaDTO
+            {
+                InicioSessao = args.Data.InicioSessao,
+                FimSessao = args.Data.FimSessao,
+                CategoriaAgendamento = args.Data.CategoriaAgendamento,
+                Observacoes = args.Data.Observacoes,
+                Id = args.Data.Id
+            };
+
+            var data = await DialogService.OpenAsync<EditarAgendamentoPessoal>("Editar Agendamento", new Dictionary<string, object> { { "Agendamento", copy } });
+
+            if (data != null)
+            {
+                // Update the appointment
+                args.Data.InicioSessao = data.InicioSessao;
+                args.Data.FimSessao = data.FimSessao;
+                args.Data.CategoriaAgendamento = data.CategoriaAgendamento;
+                args.Data.Observacoes = data.Observacoes;
+                args.Data.Id = data.Id;
+            }
+
+            await scheduler.Reload();
+            await CarregarAgenda();
+        }
     }
 
     void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<AgendaDTO> args)
     {
         // Never call StateHasChanged in AppointmentRender - would lead to infinite loop
+
+        args.Attributes["style"] = "background: rgba(255,99,71,0.6);";
 
         if (args.Data.StatusConsulta == 2)
         {
@@ -189,43 +250,53 @@
         {
             args.Attributes["style"] = "background: pink";
         }
+
+        if (args.Data.CategoriaAgendamento != null)
+        {
+            args.Attributes["style"] = "background: rgba(0,24,117);";
+        }
+
     }
 
     void OnAppointmentMouseEnter(SchedulerAppointmentMouseEventArgs<AgendaDTO> args)
     {
-        if (args.Data.TipoConsulta != 4)
+        if (args.Data.TipoConsulta != 4 && args.Data.CategoriaAgendamento == null)
         {
             TooltipService.Open(args.Element, ts =>
-            @<RadzenStack Orientation="Orientation.Vertical" Gap="0" Class="rz-p-6" Style="min-width: 250px; max-width: 500px;">
-                <RadzenText TextStyle="TextStyle.H4" Class="rz-mb-4" Style="color: var(--rz-tooltip-color);">
-                    @args.Data.PacienteNome
-                </RadzenText>
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="4px">
-                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-tooltip-color); width: 44px;">
-                        <strong>Inicio</strong>
-                    </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-tooltip-color);">
-                           @args.Data.InicioSessao.ToString("dddd, dd MMMM yyyy hh:mm tt")
-                    </RadzenText>
-                </RadzenStack>
-                <RadzenStack Orientation="Orientation.Horizontal" Gap="4px">
-                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-tooltip-color); width: 44px;">
-                        <strong>Fim</strong>
-                    </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-tooltip-color);">
-                        @args.Data.FimSessao.ToString("dddd, dd MMMM yyyy hh:mm tt")
-                    </RadzenText>
-                </RadzenStack>
-            </RadzenStack>
-            , new TooltipOptions { Position = TooltipPosition.Right, Duration = null });
+            @<div>
+                <b>Paciente: </b> @args.Data.PacienteNome
+                <br />
+                <b>Hora Inicio: </b> @args.Data.InicioSessao
+                <br />
+                <b>Hora Fim: </b> @args.Data.FimSessao
+                <br />
+                <b>CPF: </b> @args.Data.CPF
+                <br />
+                <b>CPF Pagador: </b> @args.Data.CPFPagador
+            </div>
+            , new TooltipOptions { Style = "background-color: rgba(255, 176, 139);", Position = TooltipPosition.Right, Duration = null });
+        }
+        else if (args.Data.CategoriaAgendamento != null)
+        {
+            TooltipService.Open(args.Element, ts =>
+            @<div>
+                <b>Tipo de Agendamento: </b> @CategoriaAgendamentoExtensions.ObterNomePorIdObrigatorio(CategoriaAgendamento.GetCategoriaAgendamento(), args.Data.CategoriaAgendamento ?? 0)
+                <br />
+                <b>Hora Inicio: </b> @args.Data.InicioSessao
+                <br />
+                <b>Hora Fim: </b> @args.Data.FimSessao
+                <br />
+                <b>Observações: </b> @args.Data.Observacoes
+            </div>
+            , new TooltipOptions { Style = "background-color: rgba(70,165,220);", Position = TooltipPosition.Right, Duration = null });
         }
         else
         {
             TooltipService.Open(args.Element, ts =>
             @<RadzenStack Orientation="Orientation.Vertical" Gap="0">
-                <RadzenImage Path="images/aniversario.png" Style="width: 10rem;" AlternateText="aniversario" />
-            </RadzenStack>
-            , new TooltipOptions { Position = TooltipPosition.Bottom, Duration = null });
+    <RadzenImage Path="images/aniversario.png" Style="width: 10rem;" AlternateText="aniversario" />
+</RadzenStack>
+            , new TooltipOptions { Style = "background-color: var(--rz-secondary); color: var(--rz-text-contrast-color)", Position = TooltipPosition.Bottom, Duration = null });
         }
     }
 

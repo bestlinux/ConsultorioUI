@@ -1,4 +1,6 @@
-﻿namespace ConsultorioUI.Models.DTOs
+﻿using ConsultorioUI.Pages;
+
+namespace ConsultorioUI.Models.DTOs
 {
     public class AgendaDTO
     {
@@ -25,6 +27,19 @@
         //4 - ANIVERSARIO
         public int TipoConsulta { get; set; }
 
+        //Id = 1, Nome = "Médico" },
+        //Id = 2, Nome = "Terapia" },
+        //Id = 3, Nome = "Supervisão" },
+        //Id = 4, Nome = "Grupo de Estudos" },
+        //Id = 5, Nome = "Clube do livro psicanálise" }
+        //Id = 6, Nome = "Clube do livro" },
+        //Id = 7, Nome = "Textos de Freud" },
+        //Id = 8, Nome = "Confraria" },
+        //Id = 9, Nome = "Psicanálise" },
+        //Id = 10, Nome = "Francês" },
+        //Id = 11, Nome = "Outros" },
+        public int? CategoriaAgendamento { get; set; }
+
         //1- ATENDIDOD  2 - FALTOU 3 - DESMARTCAO
         public int StatusConsulta { get; set; }
 
@@ -40,6 +55,10 @@
         public bool EmailEnviado { get; set; }
 
         public bool EmailAgendamento { get; set; }
+
+        public string? TextoAgenda { get; set; }
+
+        public string? Observacoes { get; set; }
 
     }
 }

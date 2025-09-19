@@ -1,0 +1,156 @@
+﻿@inject DialogService DialogService
+@inject IPacienteService _pacienteService
+@inject IAgendaService _agendaService
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+@if (MensagemErro is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+        @MensagemErro
+    </RadzenAlert>
+}
+<RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Visible="@isLoading" />
+<RadzenTemplateForm TItem="AgendaDTO" Data="@model" Submit=@OnSubmit>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Categoria Agendamento" />
+        </div>
+        <div class="col">
+            <RadzenDropDown TValue="int" @bind-Value="CategoriaAgendamentoID" Placeholder="Selecione..." AllowFiltering="true" Data="@listCategoriaAgendamento" Style="width: 100%;" TextProperty="Nome" InputAttributes="@(new Dictionary<string, object>() { { "aria-label", "Selecione..." } })" ValueProperty="Id" Name="Nome">
+            </RadzenDropDown>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Observação" />
+        </div>
+        <div class="col">
+            <RadzenTextArea @bind-Value=@Observacoes Style="width: 100%" aria-label="TextArea" />
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Tipo da Recorrencia" />
+        </div>
+        <div class="col">
+            <RadzenRadioButtonList @bind-Value="model.TipoRecorrencia" TValue="int" Change=@(args => ValidaRecorrencia(model.TipoRecorrencia))>
+                <Items>
+                    <RadzenRadioButtonListItem Text="Semanal" Value="5" />
+                    <RadzenRadioButtonListItem Text="Quinzenal" Value="6" />
+                    <RadzenRadioButtonListItem Text="Nenhuma" Value="0" />
+                </Items>
+            </RadzenRadioButtonList>
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Quantidade de recorrências" Visible=@AtivaRecorrencia />
+        </div>
+        <div class="col">
+            <RadzenNumeric ShowUpDown="false" TValue="int" @bind-Value="model.NumeroRecorrencias" InputAttributes="@(new Dictionary<string, object>() { { "aria-label", "enter value" } })" Visible=@AtivaRecorrencia />
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Hora Inicio" />
+        </div>
+        <div class="col">
+            <RadzenDatePicker @bind-Value="@model.InicioSessao" Name="InicioSessao" ShowTime="true" />
+            <RadzenRequiredValidator Text="Data inicio é obrigatória" Component="InicioSessao" />
+        </div>
+    </div>
+    <div class="row" style="margin-bottom: 16px">
+        <div class="col-md-3">
+            <RadzenLabel Text="Hora Fim" />
+        </div>
+        <div class="col">
+            <RadzenDatePicker Name="FimSessao" @bind-Value="@model.FimSessao" ShowTime="true" />
+            <RadzenRequiredValidator Component="FimSessao" Text="Data fim é obrigatória" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3"></div>
+        <div class="col">
+            <RadzenButton ButtonType="ButtonType.Submit" Text="Save" />
+        </div>
+    </div>
+</RadzenTemplateForm>
+@code {
+    [Parameter]
+    public DateTime InicioSessao { get; set; }
+
+    [Parameter]
+    public DateTime FimSessao { get; set; }
+
+    public int CategoriaAgendamentoID { get; set; }
+
+    public string? MensagemErro { get; set; }
+
+    public bool AtivaRecorrencia = false;
+
+    public AgendaDTO model = new();
+
+    public bool isLoading = false;
+
+    List<CategoriaAgendamento> listCategoriaAgendamento = new();
+
+    public string? Observacoes { get; set; }
+
+    public void ValidaRecorrencia(int TipoRecorrencia)
+    {
+        if (TipoRecorrencia == 0)
+            AtivaRecorrencia = false;
+        else
+            AtivaRecorrencia = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        listCategoriaAgendamento = CategoriaAgendamento.GetCategoriaAgendamento();
+    }
+
+    protected override void OnParametersSet()
+    {
+        model.InicioSessao = InicioSessao;
+        model.FimSessao = FimSessao;
+    }
+
+    public async void OnSubmit(AgendaDTO model)
+    {
+        try
+        {
+            isLoading = true;
+
+            model.CategoriaAgendamento = CategoriaAgendamentoID;
+            model.EmailAgendamento = false;
+            model.Observacoes = Observacoes;
+
+            //model.PacienteNome = teste
+            var agendaResult = await _agendaService.CreateAgenda(model);
+
+            ShowNotification(new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Aviso", Detail = "Agendamento cadastrado com sucesso !", Duration = 4000 });
+            //Reset();
+            DialogService.Close(model);
+            MensagemErro = null;
+            isLoading = false;
+        }
+        catch (Exception ex)
+        {
+            MensagemErro = $"Erro ao criar o agendamento : {ex.Message}";
+            DialogService.Refresh();
+        }
+    }
+    void Reset()
+    {
+        model = new AgendaDTO();
+    }
+
+    void ShowNotification(NotificationMessage message)
+    {
+        NotificationService.Notify(message);
+
+        //console.Log($"{message.Severity} notification");
+    }
+}

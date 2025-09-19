@@ -1,4 +1,5 @@
 ﻿using ConsultorioUI.Models.DTOs;
+using ConsultorioUI.Pages.Pacientes;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -135,6 +136,27 @@ namespace ConsultorioUI.Services.Api
         public async Task<bool> DeleteAgendaRecorrencia(int? pacienteID)
         {
             var caminho = $"delete-agenda-paciente-by-recorrencia?PacienteID={pacienteID}";
+            var apiUrl = apiEndpoint + caminho;
+
+            var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+
+            using (var response = await httpClient.DeleteAsync(apiUrl))
+            {
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    throw new UnauthorizedAccessException();
+                }
+            }
+            return false;
+        }
+
+        public async Task<bool> DeleteAgendaPessoalRecorrencia(int? categoriaAgendamento)
+        {
+            var caminho = $"delete-agenda-pessoal-by-recorrencia?CategoriaAgendamento={categoriaAgendamento}";
             var apiUrl = apiEndpoint + caminho;
 
             var httpClient = _httpClientFactory.CreateClient("apiconsultorio");

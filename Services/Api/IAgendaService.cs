@@ -13,5 +13,7 @@ namespace ConsultorioUI.Services.Api
         Task<bool> DeleteAgenda(int id);
 
         Task<bool> DeleteAgendaRecorrencia(int? pacienteID);
+
+        Task<bool> DeleteAgendaPessoalRecorrencia(int? categoriaAgendamento);
     }
 }
