@@ -81,15 +81,15 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="PagamentoDTO" Property="Modalidade" Title="Modalidade" Width="200px">
                         <Template Context="pagamento">
-                            @if (pagamento.Paciente!.TipoPagamento == 1)
+                            @if (pagamento.Paciente!.TipoPagamento!.Equals("1"))
                             {
                                 <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Mensal")</span>
                             }
-                            else if (pagamento.Paciente!.TipoPagamento == 2)
+                            else if (pagamento.Paciente!.TipoPagamento!.Equals("2"))
                             {
                                 <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Avulso")</span>
                             }
-                            else if (pagamento.Paciente!.TipoPagamento == 3)
+                            else if (pagamento.Paciente!.TipoPagamento!.Equals("3"))
                             {
                                 <span style='color: var(--rz-primary-darker)'>@String.Format("{0:d}", "Semanal")</span>
                             }

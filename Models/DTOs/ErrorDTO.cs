@@ -1,13 +1,9 @@
-﻿using System.Text.Json.Serialization;
-
-namespace ConsultorioUI.Models.DTOs
+﻿namespace ConsultorioUI.Models.DTOs
 {
-    public class ErrorDto
+    public class ErrorDTO
     {
-        [JsonPropertyName("title")]
         public string Title { get; set; }
 
-        [JsonPropertyName("errors")]
         public List<ErrorItem> Errors { get; set; } = new();
     }
 }

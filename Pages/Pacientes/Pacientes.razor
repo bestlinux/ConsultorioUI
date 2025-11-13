@@ -79,12 +79,12 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="PacienteDTO" Property="TipoPagamento" Title="Tipo Pagamento" Width="60px">
             <Template Context="order">
-                @if (order.TipoPagamento == 1)
+                @if (order.TipoPagamento!.Equals("1"))
                 {
                     @String.Format("{0:d}", "Mensal")
                     
                 }
-                else if (order.TipoPagamento == 2)
+                else if (order.TipoPagamento!.Equals("2"))
                 {
                     @String.Format("{0:d}", "Avulso")
                     
@@ -95,7 +95,7 @@
                 }
             </Template>
             <EditTemplate Context="order">
-                <RadzenDropDown @bind-Value="order.Ativo" Data=@statusPaciente TextProperty="Status" ValueProperty="Id" Style="width: 100%; max-width: 400px;" Name="DropDownTextValueProperties" />
+                <RadzenDropDown @bind-Value="order.TipoPagamento" Data=@statusPagamento TextProperty="Pagamento" ValueProperty="Id" Style="width: 100%; max-width: 400px;" Name="DropDownTextValueProperties" />
             </EditTemplate>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="PacienteDTO" Property="ValorSessao" Title="Valor da Sessão" Width="60px">
@@ -135,6 +135,8 @@
     private string? errorMessage = "Não foi possível acessar os Pacientes";
 
     IEnumerable<StatusPaciente> statusPaciente;
+
+    IEnumerable<TipoPagamento> statusPagamento;
 
     string htmlValue = "<h1>Hello World!</h1>";
 
@@ -349,6 +351,13 @@
         statusPacienteList.Add(new StatusPaciente(1, "Ativo"));
         statusPacienteList.Add(new StatusPaciente(2, "Inativo"));
         statusPaciente = statusPacienteList;
+
+
+        List<TipoPagamento> tipoPagamentoList = new List<TipoPagamento>();
+        tipoPagamentoList.Add(new TipoPagamento("1", "Mensal"));
+        tipoPagamentoList.Add(new TipoPagamento("2", "Avulso"));
+        tipoPagamentoList.Add(new TipoPagamento("3", "Semanal"));
+        statusPagamento = tipoPagamentoList;
     
         await ShowLoading();
         try

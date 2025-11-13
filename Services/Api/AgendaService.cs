@@ -11,7 +11,6 @@ namespace ConsultorioUI.Services.Api
     {
         private readonly IHttpClientFactory _httpClientFactory;
         public ILogger<AgendaService> _logger;      
-        private const string apiEndpoint = "/api/agendas/";
         private readonly JsonSerializerOptions _options;
 
         private AgendaDTO? agenda;
@@ -29,13 +28,32 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
-                var result = await httpClient.GetFromJsonAsync<List<AgendaDTO>>(apiEndpoint);
-                return result;
+                var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
+
+                var response = await httpClient.GetAsync("api/GetAllAgenda");
+
+
+                var conteudo = await response.Content.ReadAsStringAsync();
+
+                if (conteudo != null && conteudo != "")
+                {
+                    var result = JsonSerializer.Deserialize<List<AgendaDTO>>
+                                     (await response.Content.ReadAsStringAsync(),
+                                     new JsonSerializerOptions
+                                     {
+                                         PropertyNameCaseInsensitive = false
+                                     });
+
+                    return result!;
+                }
+                else
+                {
+                    return new List<AgendaDTO>();
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Erro ao acessar as agendas: {apiEndpoint} " + ex.Message);
+                _logger.LogError($"Erro ao acessar as agendas: " + ex.Message);
                 throw new UnauthorizedAccessException();
             }
         }
@@ -43,17 +61,17 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+                var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-                AgendaDTO agendaUpdate = new();
+                AgendaDTO? agendaUpdated = new();
 
-                using (var response = await httpClient.PutAsJsonAsync(apiEndpoint, agendaDTO))
+                using (var response = await httpClient.PutAsJsonAsync("api/UpdateAgenda", agendaDTO))
                 {
                     if (response.IsSuccessStatusCode)
                     {
                         var apiResponse = await response.Content.ReadAsStreamAsync();
-                        agendaUpdate = await JsonSerializer
-                                            .DeserializeAsync<AgendaDTO>(apiResponse, _options);
+                        agendaUpdated = await JsonSerializer
+                                            .DeserializeAsync<AgendaDTO>(apiResponse!, _options);
                     }
                     else if (response.StatusCode == HttpStatusCode.Unauthorized)
                     {
@@ -63,17 +81,25 @@ namespace ConsultorioUI.Services.Api
                     {
                         var errorMessage = string.Empty;
                         var apiResponse = await response.Content.ReadAsStreamAsync();
-                        ErrorDto erro = await JsonSerializer
-                                            .DeserializeAsync<ErrorDto>(apiResponse, _options);
+                        var erro = JsonSerializer.Deserialize<ErrorResponse>
+                               (await response.Content.ReadAsStringAsync(),
+                               new JsonSerializerOptions
+                               {
+                                   PropertyNameCaseInsensitive = false
+                               });
 
-                        foreach (var item in erro.Errors)
+                        if (erro != null)
                         {
-                            errorMessage = String.Concat(item.Message, Environment.NewLine);
+                            foreach (var item in erro.Error.Errors)
+                            {
+                                errorMessage = System.String.Concat(item.Message, Environment.NewLine);
+                            }
                         }
+
                         throw new Exception(errorMessage);
                     }
 
-                    return agendaUpdate;
+                    return agendaUpdated!;
                 }
             }
             catch (Exception)
@@ -81,98 +107,121 @@ namespace ConsultorioUI.Services.Api
                 throw;
             }
         }
-        public async Task<AgendaDTO> CreateAgenda(AgendaDTO agenda)
+        public async Task<AgendaDTO> CreateAgenda(AgendaDTO agendaDTO)
         {
-            var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+            var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            StringContent content = new(JsonSerializer.Serialize(agenda),
-                                                      Encoding.UTF8, "application/json");
+            var response = await httpClient.PostAsJsonAsync("api/CreateAgenda", agendaDTO);
 
-            using (var response = await httpClient.PostAsync(apiEndpoint, content))
+            var conteudo = await response.Content.ReadAsStringAsync();
+
+            var agenda = JsonSerializer.Deserialize<AgendaDTO>
+                             (await response.Content.ReadAsStringAsync(),
+                             new JsonSerializerOptions
+                             {
+                                 PropertyNameCaseInsensitive = false
+                             });
+
+            if (response.IsSuccessStatusCode)
             {
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = await response.Content.ReadAsStreamAsync();
-
-                    agenda = await JsonSerializer
-                               .DeserializeAsync<AgendaDTO>(apiResponse, _options);
-                }
-                else if (response.StatusCode == HttpStatusCode.BadRequest)
-                {
-                    var message = await response.Content.ReadAsStringAsync();
-                    _logger.LogError($"Erro ao salvar o agendamento para o paciente = {agenda.PacienteNome} - {message}");
-                    throw new Exception($"Status Code : {response.StatusCode} - {message}");
-                }
-                else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    throw new UnauthorizedAccessException();
-                }
-                else
-                {
-                    return null;
-                }
+                return agenda!;
             }
-            return agenda;
+            else
+            {
+                var message = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"Erro ao salvar a agenda");
+                throw new Exception($"Status Code : {response.StatusCode} - {message}");
+            }
         }
 
         public async Task<bool> DeleteAgenda(int id)
         {
-            var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+            var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            using (var response = await httpClient.DeleteAsync(apiEndpoint + id))
+            var response = await httpClient.DeleteAsync("api/DeleteAgenda?Id=" + id);
+
+            if (response.StatusCode == HttpStatusCode.BadRequest)
             {
-                if (response.IsSuccessStatusCode)
+                var errorMessage = string.Empty;
+
+                var erro = JsonSerializer.Deserialize<ErrorResponse>
+                             (await response.Content.ReadAsStringAsync(),
+                             new JsonSerializerOptions
+                             {
+                                 PropertyNameCaseInsensitive = false
+                             });
+
+                if (erro != null)
                 {
-                    return true;
+                    foreach (var item in erro.Error.Errors)
+                    {
+                        errorMessage = System.String.Concat(item.Message, Environment.NewLine);
+                    }
                 }
-                else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    throw new UnauthorizedAccessException();
-                }
+                throw new Exception(errorMessage);
             }
-            return false;
+
+            return true;
         }
 
         public async Task<bool> DeleteAgendaRecorrencia(int? pacienteID)
         {
-            var caminho = $"delete-agenda-paciente-by-recorrencia?PacienteID={pacienteID}";
-            var apiUrl = apiEndpoint + caminho;
+            var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+            var response = await httpClient.DeleteAsync("api/DeleteAgendaByRecorrencia?Id=" + pacienteID);
 
-            using (var response = await httpClient.DeleteAsync(apiUrl))
+            if (response.StatusCode == HttpStatusCode.BadRequest)
             {
-                if (response.IsSuccessStatusCode)
+                var errorMessage = string.Empty;
+
+                var erro = JsonSerializer.Deserialize<ErrorResponse>
+                             (await response.Content.ReadAsStringAsync(),
+                             new JsonSerializerOptions
+                             {
+                                 PropertyNameCaseInsensitive = false
+                             });
+
+                if (erro != null)
                 {
-                    return true;
+                    foreach (var item in erro.Error.Errors)
+                    {
+                        errorMessage = System.String.Concat(item.Message, Environment.NewLine);
+                    }
                 }
-                else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    throw new UnauthorizedAccessException();
-                }
+                throw new Exception(errorMessage);
             }
-            return false;
+
+            return true;
         }
 
         public async Task<bool> DeleteAgendaPessoalRecorrencia(int? categoriaAgendamento)
         {
-            var caminho = $"delete-agenda-pessoal-by-recorrencia?CategoriaAgendamento={categoriaAgendamento}";
-            var apiUrl = apiEndpoint + caminho;
+            var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+            var response = await httpClient.DeleteAsync("api/DeleteAgendaPessoalByRecorrencia?Id=" + categoriaAgendamento);
 
-            using (var response = await httpClient.DeleteAsync(apiUrl))
+            if (response.StatusCode == HttpStatusCode.BadRequest)
             {
-                if (response.IsSuccessStatusCode)
+                var errorMessage = string.Empty;
+
+                var erro = JsonSerializer.Deserialize<ErrorResponse>
+                             (await response.Content.ReadAsStringAsync(),
+                             new JsonSerializerOptions
+                             {
+                                 PropertyNameCaseInsensitive = false
+                             });
+
+                if (erro != null)
                 {
-                    return true;
+                    foreach (var item in erro.Error.Errors)
+                    {
+                        errorMessage = System.String.Concat(item.Message, Environment.NewLine);
+                    }
                 }
-                else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    throw new UnauthorizedAccessException();
-                }
+                throw new Exception(errorMessage);
             }
-            return false;
+
+            return true;
         }
     }
 }

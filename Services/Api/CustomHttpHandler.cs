@@ -22,7 +22,7 @@ public class CustomHttpHandler : DelegatingHandler
 
         if (!string.IsNullOrEmpty(jwtToken))
         {
-            request.Headers.Add("Authorization", $"bearer {jwtToken}");
+            request.Headers.Add("Authorization", $"Bearer {jwtToken}");
         }
         return await base.SendAsync(request, cancellationToken);
     }

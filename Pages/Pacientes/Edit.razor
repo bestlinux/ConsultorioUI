@@ -102,7 +102,7 @@
         paciente = await _pacienteService.GetPaciente(pacienteId);
 
         if (paciente.TipoPagamento != null)
-            tipoPagamentoEdit = (int) paciente.TipoPagamento;
+            tipoPagamentoEdit = int.Parse(paciente.TipoPagamento);
     }
 
     async Task EditarPaciente()

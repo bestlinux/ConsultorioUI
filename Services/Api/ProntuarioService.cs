@@ -11,7 +11,6 @@ namespace ConsultorioUI.Services.Api
     {
         private readonly IHttpClientFactory _httpClientFactory;
         public ILogger<ProntuarioService> _logger;
-        private const string apiEndpoint = "/api/prontuarios/";
         private readonly JsonSerializerOptions _options;
 
         private ProntuarioDTO? pronturario;
@@ -28,17 +27,35 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
-                var caminho = $"search-prontuarios-paciente?PacienteID={PacienteID}";
-                var apiUrl = apiEndpoint + caminho;
+                var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
+                var response = await httpClient.GetAsync("api/GetProntuarioByPaciente?Id=" + PacienteID);
 
-                var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
-                var result = await httpClient.GetFromJsonAsync<List<ProntuarioDTO>>(apiUrl);
-                return result;
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = JsonSerializer.Deserialize<List<ProntuarioDTO>>
+                                    (await response.Content.ReadAsStringAsync(),
+                                    new JsonSerializerOptions
+                                    {
+                                        PropertyNameCaseInsensitive = false
+                                    });
+
+                    return result!;
+                }
+                else
+                {
+                    var message = await response.Content.ReadAsStringAsync();
+                    _logger.LogError($"Erro ao obter o pronturario pelo id= {PacienteID} - {message}");
+                    throw new Exception($"Status Code : {response.StatusCode} - {message}");
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw new UnauthorizedAccessException();
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Erro ao acessar os prontuarios: {apiEndpoint} " + ex.Message);
-                throw new UnauthorizedAccessException();
+                _logger.LogError($"Erro ao obter o pronturario pelo id={PacienteID} \n\n {ex.Message}");
+                throw;
             }
         }
 
@@ -46,11 +63,11 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+                var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-                ProntuarioDTO prontuarioUpdate  = new();
+                ProntuarioDTO prontuarioUpdate = new();
 
-                using (var response = await httpClient.PutAsJsonAsync(apiEndpoint, prontuarioDTO))
+                using (var response = await httpClient.PutAsJsonAsync("api/UpdateProntuario", prontuarioDTO))
                 {
                     if (response.IsSuccessStatusCode)
                     {
@@ -66,12 +83,19 @@ namespace ConsultorioUI.Services.Api
                     {
                         var errorMessage = string.Empty;
                         var apiResponse = await response.Content.ReadAsStreamAsync();
-                        ErrorDto erro = await JsonSerializer
-                                            .DeserializeAsync<ErrorDto>(apiResponse, _options);
+                        var erro = JsonSerializer.Deserialize<ErrorResponse>
+                             (await response.Content.ReadAsStringAsync(),
+                             new JsonSerializerOptions
+                             {
+                                 PropertyNameCaseInsensitive = false
+                             });
 
-                        foreach (var item in erro.Errors)
+                        if (erro != null)
                         {
-                            errorMessage = System.String.Concat(item.Message, Environment.NewLine);
+                            foreach (var item in erro.Error.Errors)
+                            {
+                                errorMessage = System.String.Concat(item.Message, Environment.NewLine);
+                            }
                         }
                         throw new Exception(errorMessage);
                     }

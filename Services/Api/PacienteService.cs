@@ -1,12 +1,15 @@
-﻿using ConsultorioUI.Models.DTOs;
-using System.Net.Http.Json;
-using System.Net.Http;
-using System.Net;
-using System.Text;
+﻿using ConsultorioUI.Models;
+using ConsultorioUI.Models.DTOs;
 using System;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Reflection.Metadata;
-using System.Text.Json;
 using System.Runtime.ConstrainedExecution;
+using System.Text;
+using System.Text.Json;
+using static ConsultorioUI.Pages.Pagamentos.Pagamentos;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ConsultorioUI.Services.Api
 {
@@ -14,7 +17,6 @@ namespace ConsultorioUI.Services.Api
     {
         private readonly IHttpClientFactory _httpClientFactory;
         public ILogger<PacienteService> _logger;
-        private const string apiEndpoint = "/api/pacientes/";
         private readonly JsonSerializerOptions _options;
 
         private PacienteDTO? paciente;
@@ -26,127 +28,111 @@ namespace ConsultorioUI.Services.Api
             _options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         }
 
-        public async Task<EnderecoDTO> BuscaCEP(string CEP)
-        {
-            try
-            {
-                var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
-                var response = await httpClient.GetAsync(apiEndpoint + "buscacep/" + CEP);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    return await response.Content.ReadFromJsonAsync<EnderecoDTO>();
-                }
-                else
-                {
-                    var message = await response.Content.ReadAsStringAsync();
-                    _logger.LogError($"Erro ao obter o CEP pelo cep= {CEP} - {message}");
-                    throw new Exception($"Status Code : {response.StatusCode} - {message}");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Erro ao buscar o CEP: {apiEndpoint} " + ex.Message);
-                throw new UnauthorizedAccessException();
-            }
-        }
-
         public async Task<PacienteDTO> CreatePaciente(PacienteDTO pacienteDTO)
         {
+            var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+            var response = await httpClient.PostAsJsonAsync("api/CreatePaciente", pacienteDTO);
 
-            StringContent content = new(JsonSerializer.Serialize(pacienteDTO),
-                                                      Encoding.UTF8, "application/json");
+            var conteudo = await response.Content.ReadAsStringAsync();
 
-            using (var response = await httpClient.PostAsync(apiEndpoint, content))
+            var paciente = JsonSerializer.Deserialize<PacienteDTO>
+                             (await response.Content.ReadAsStringAsync(),
+                             new JsonSerializerOptions
+                             {
+                                 PropertyNameCaseInsensitive = false
+                             });
+
+            if (response.IsSuccessStatusCode)
             {
-                if (response.IsSuccessStatusCode)
-                {
-                    var apiResponse = await response.Content.ReadAsStreamAsync();
-
-                    paciente = await JsonSerializer
-                               .DeserializeAsync<PacienteDTO>(apiResponse, _options);
-                }
-                else if (response.StatusCode == HttpStatusCode.BadRequest)
-                {
-                    var message = await response.Content.ReadAsStringAsync();
-                    _logger.LogError($"Erro ao salvar o paciente pelo nome= {pacienteDTO.Nome} - {message}");
-                    throw new Exception($"Status Code : {response.StatusCode} - {message}");
-                }
-                else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    throw new UnauthorizedAccessException();
-                }
-                else
-                {
-                    return null;
-                }
+                return paciente!;
             }
-            return paciente;
+            else
+            {
+                var message = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"Erro ao salvar o paciente pelo nome= {pacienteDTO.Nome} - {message}");
+                throw new Exception($"Status Code : {response.StatusCode} - {message}");
+            }
         }
 
         public async Task<List<PacienteDTO>> GetPacientes()
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
-                var result = await httpClient.GetFromJsonAsync<List<PacienteDTO>>(apiEndpoint);
-                return result;
+                var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
+                var response = await httpClient.GetAsync("api/GetAllPacientes");
+
+                var conteudo = await response.Content.ReadAsStringAsync();
+
+                if (conteudo != null && conteudo != "")
+                {
+                    var result = JsonSerializer.Deserialize<List<PacienteDTO>>
+                                     (await response.Content.ReadAsStringAsync(),
+                                     new JsonSerializerOptions
+                                     {
+                                         PropertyNameCaseInsensitive = false
+                                     });
+
+                    return result!;
+                }
+                else
+                {
+                    return new List<PacienteDTO>();
+                }
+
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Erro ao acessar pacientes: {apiEndpoint} " + ex.Message);
-                throw new UnauthorizedAccessException();
+                _logger.LogError($"Erro ao acessar pacientes: " + ex.Message);
+                throw new Exception(ex.Message);
             }
         }
 
         public async Task<bool> DeletePaciente(int id)
         {
-            var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+            var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            using (var response = await httpClient.DeleteAsync(apiEndpoint + id))
+            var response = await httpClient.DeleteAsync("api/DeletePaciente?Id=" + id);
+
+            if (response.StatusCode == HttpStatusCode.BadRequest)
             {
-                if (response.IsSuccessStatusCode)
-                {
-                    return true;
-                }
-                else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    throw new UnauthorizedAccessException();
-                }
-                else if (response.StatusCode == HttpStatusCode.BadRequest)
-                {
-                    var errorMessage = string.Empty;
-                    var apiResponse = await response.Content.ReadAsStreamAsync();
-                    ErrorDto erro = await JsonSerializer
-                                        .DeserializeAsync<ErrorDto>(apiResponse, _options);
+                var errorMessage = string.Empty;
 
-                    foreach (var item in erro.Errors)
+                var erro = JsonSerializer.Deserialize<ErrorResponse>
+                             (await response.Content.ReadAsStringAsync(),
+                             new JsonSerializerOptions
+                             {
+                                 PropertyNameCaseInsensitive = false
+                             });
+
+                if (erro != null)
+                {
+                    foreach (var item in erro.Error.Errors)
                     {
-                        errorMessage = String.Concat(item.Message, Environment.NewLine);
+                        errorMessage = System.String.Concat(item.Message, Environment.NewLine);
                     }
-                    throw new Exception(errorMessage);
                 }
+                throw new Exception(errorMessage);
             }
-            return false;
+            
+            return true;
         }
 
         public async Task<PacienteDTO> UpdatePaciente(PacienteDTO pacienteDTO)
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+                var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-                PacienteDTO pacienteUpdated = new();
+                PacienteDTO? pacienteUpdated = new();
 
-                using (var response = await httpClient.PutAsJsonAsync(apiEndpoint, pacienteDTO))
+                using (var response = await httpClient.PutAsJsonAsync("api/UpdatePaciente", pacienteDTO))
                 {
                     if (response.IsSuccessStatusCode)
                     {
                         var apiResponse = await response.Content.ReadAsStreamAsync();
                         pacienteUpdated = await JsonSerializer
-                                            .DeserializeAsync<PacienteDTO>(apiResponse, _options);
+                                            .DeserializeAsync<PacienteDTO>(apiResponse!, _options);
                     }
                     else if (response.StatusCode == HttpStatusCode.Unauthorized)
                     {
@@ -156,17 +142,25 @@ namespace ConsultorioUI.Services.Api
                     {
                         var errorMessage = string.Empty;
                         var apiResponse = await response.Content.ReadAsStreamAsync();
-                        ErrorDto erro = await JsonSerializer
-                                            .DeserializeAsync<ErrorDto>(apiResponse, _options);
+                        var erro = JsonSerializer.Deserialize<ErrorResponse>
+                               (await response.Content.ReadAsStringAsync(),
+                               new JsonSerializerOptions
+                               {
+                                   PropertyNameCaseInsensitive = false
+                               });
 
-                        foreach (var item in erro.Errors)
+                        if (erro != null)
                         {
-                            errorMessage = String.Concat(item.Message, Environment.NewLine);
+                            foreach (var item in erro.Error.Errors)
+                            {
+                                errorMessage = System.String.Concat(item.Message, Environment.NewLine);
+                            }
                         }
+
                         throw new Exception(errorMessage);
                     }
 
-                    return pacienteUpdated;
+                    return pacienteUpdated!;
                 }
             }
             catch (Exception)
@@ -179,13 +173,13 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
-                var response = await httpClient.GetAsync(apiEndpoint + id);
+                var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
+                var response = await httpClient.GetAsync("api/GetPacienteById?Id=" + id);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var paciente = await response.Content.ReadFromJsonAsync<PacienteDTO>();
-                    return paciente;
+                    return paciente!;
                 }
                 else
                 {

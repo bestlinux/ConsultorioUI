@@ -2,6 +2,7 @@
 using ConsultorioUI.Models;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 
@@ -26,17 +27,19 @@ public class AuthService : IAuthService
     {
         try
         {
-            var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
-            var loginAsJson = JsonSerializer.Serialize(loginModel);
-            var requestContent = new StringContent(loginAsJson, Encoding.UTF8, "application/json");
+            var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            var response = await httpClient.PostAsync("api/Users/Login", requestContent);
+            //var response = await httpClient.PostAsJsonAsync("api/login?code=rY_Q1q9SmGesW90ZZxa9Blw3E1A0G--AE5JYYdeJO2mQAzFuxG95qA==", loginModel);
+            var response = await httpClient.PostAsJsonAsync("api/login", loginModel);
 
-           var loginResult = JsonSerializer.Deserialize<LoginResult>
+
+            var conteudo = await response.Content.ReadAsStringAsync();
+
+            var loginResult = JsonSerializer.Deserialize<LoginResult>
                              (await response.Content.ReadAsStringAsync(),
                              new JsonSerializerOptions
                              {
-                               PropertyNameCaseInsensitive = true
+                               PropertyNameCaseInsensitive = false
                              });
 
             if (!response.IsSuccessStatusCode)
@@ -51,15 +54,15 @@ public class AuthService : IAuthService
                                 .MarkUserAsAuthenticated(loginModel.Email);
 
             httpClient.DefaultRequestHeaders.Authorization = 
-                        new AuthenticationHeaderValue("bearer",
+                        new AuthenticationHeaderValue("Bearer",
                                                          loginResult.Token);
 
             return loginResult;
 
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw;
+            throw ex;
         }
     }
 

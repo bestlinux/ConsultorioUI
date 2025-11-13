@@ -11,7 +11,6 @@ namespace ConsultorioUI.Services.Api
     {
         private readonly IHttpClientFactory _httpClientFactory;
         public ILogger<PagamentoService> _logger;
-        private const string apiEndpoint = "/api/pagamentos";
         private readonly JsonSerializerOptions _options;
 
         private PagamentoDTO? pagamento;
@@ -25,12 +24,12 @@ namespace ConsultorioUI.Services.Api
         }
         public async Task<PagamentoDTO> CreatePagamento(PagamentoDTO pagamentoDTO)
         {
-            var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+            var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
             StringContent content = new(JsonSerializer.Serialize(pagamentoDTO),
                                                       Encoding.UTF8, "application/json");
 
-            using (var response = await httpClient.PostAsync(apiEndpoint, content))
+            using (var response = await httpClient.PostAsync("api/CreatePagamento", content))
             {
                 if (response.IsSuccessStatusCode)
                 {
@@ -61,14 +60,31 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
-                var result = await httpClient.GetFromJsonAsync<List<PagamentoDTO>>(apiEndpoint);
-                return result;
+                var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
+                var response = await httpClient.GetAsync("api/GetAllPagamentos");
+
+                var conteudo = await response.Content.ReadAsStringAsync();
+
+                if (conteudo != null && conteudo != "")
+                {
+                    var result = JsonSerializer.Deserialize<List<PagamentoDTO>>
+                                     (await response.Content.ReadAsStringAsync(),
+                                     new JsonSerializerOptions
+                                     {
+                                         PropertyNameCaseInsensitive = false
+                                     });
+
+                    return result!;
+                }
+                else
+                {
+                    return new List<PagamentoDTO>();
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Erro ao acessar os pagamentos: {apiEndpoint} " + ex.Message);
-                throw new UnauthorizedAccessException();
+                _logger.LogError($"Erro ao acessar os pagamentos: " + ex.Message);
+                throw new Exception(ex.Message);
             }
         }
 
@@ -76,16 +92,15 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
-                var caminho = $"/search-pagamentos-paciente-mes-ano?PacienteID={PacienteID}&Mes={Mes}&Ano={Ano}";
-                var apiUrl = apiEndpoint + caminho;
+                var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-                var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
-                var result = await httpClient.GetFromJsonAsync<List<PagamentoDTO>>(apiUrl);
-                return result;
+                var result = await httpClient.GetFromJsonAsync<List<PagamentoDTO>>("api/GetPagamentosByPacienteMesAno?PacienteID="+PacienteID+ "&Mes=" + Mes + "&Ano=" + Ano);
+
+                return result!;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Erro ao acessar os pagamentos: {apiEndpoint} " + ex.Message);
+                _logger.LogError($"Erro ao acessar os pagamentos: " + ex.Message);
                 throw new UnauthorizedAccessException();
             }
         }
@@ -94,11 +109,11 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
-                var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+                var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
                 PagamentoDTO pagamentoUpdate = new();
 
-                using (var response = await httpClient.PutAsJsonAsync(apiEndpoint, pagamentoDTO))
+                using (var response = await httpClient.PutAsJsonAsync("api/UpdatePagamento", pagamentoDTO))
                 {
                     if (response.IsSuccessStatusCode)
                     {
@@ -114,12 +129,19 @@ namespace ConsultorioUI.Services.Api
                     {
                         var errorMessage = string.Empty;
                         var apiResponse = await response.Content.ReadAsStreamAsync();
-                        ErrorDto erro = await JsonSerializer
-                                            .DeserializeAsync<ErrorDto>(apiResponse, _options);
+                        var erro = JsonSerializer.Deserialize<ErrorResponse>
+                             (await response.Content.ReadAsStringAsync(),
+                             new JsonSerializerOptions
+                             {
+                                 PropertyNameCaseInsensitive = false
+                             });
 
-                        foreach (var item in erro.Errors)
+                        if (erro != null)
                         {
-                            errorMessage = String.Concat(item.Message, Environment.NewLine);
+                            foreach (var item in erro.Error.Errors)
+                            {
+                                errorMessage = System.String.Concat(item.Message, Environment.NewLine);
+                            }
                         }
                         throw new Exception(errorMessage);
                     }
@@ -135,9 +157,9 @@ namespace ConsultorioUI.Services.Api
 
         public async Task<bool> DeletePagamento(int id)
         {
-            var httpClient = _httpClientFactory.CreateClient("apiconsultorio");
+            var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            using (var response = await httpClient.DeleteAsync("/api/pagamentos/" + id))
+            using (var response = await httpClient.DeleteAsync("api/DeletePagamento?Id=" + id))
             {
                 if (response.IsSuccessStatusCode)
                 {
