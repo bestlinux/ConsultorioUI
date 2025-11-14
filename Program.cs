@@ -22,11 +22,13 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 
+var azureFunctionUrl = builder.Configuration["AzureFunctionUrl"];
+
 builder.Services.AddHttpClient("ConsultorioPsicoFunctions", options =>
 {
     //options.BaseAddress = new Uri("https://localhost:7020/");
-    options.BaseAddress = new Uri("https://consultoriopsicofunctions-gsbcbwefdpasfhc7.brazilsouth-01.azurewebsites.net"); //APIGateway - Ocelot
-    //options.BaseAddress = new Uri("http://localhost:7111");
+    //options.BaseAddress = new Uri("https://consultoriopsicofunctions-gsbcbwefdpasfhc7.brazilsouth-01.azurewebsites.net"); //APIGateway - Ocelot
+    options.BaseAddress = new Uri(azureFunctionUrl!);
 }).AddHttpMessageHandler<CustomHttpHandler>();
 
 builder.Services.AddScoped<CustomHttpHandler>();
