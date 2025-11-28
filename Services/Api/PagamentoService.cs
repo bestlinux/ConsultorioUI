@@ -98,9 +98,11 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
+                var key = _configuration["FunctionKey"];
+
                 var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-                var result = await httpClient.GetFromJsonAsync<List<PagamentoDTO>>("api/GetPagamentosByPacienteMesAno?PacienteID="+PacienteID+ "&Mes=" + Mes + "&Ano=" + Ano);
+                var result = await httpClient.GetFromJsonAsync<List<PagamentoDTO>>("api/GetPagamentosByPacienteMesAno?code=" + key + "&PacienteID=" + PacienteID+ "&Mes=" + Mes + "&Ano=" + Ano);
 
                 return result!;
             }
@@ -115,11 +117,13 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
+                var key = _configuration["FunctionKey"];
+
                 var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
                 PagamentoDTO pagamentoUpdate = new();
 
-                using (var response = await httpClient.PutAsJsonAsync("api/UpdatePagamento", pagamentoDTO))
+                using (var response = await httpClient.PutAsJsonAsync("api/UpdatePagamento?code=" + key, pagamentoDTO))
                 {
                     if (response.IsSuccessStatusCode)
                     {
@@ -163,9 +167,11 @@ namespace ConsultorioUI.Services.Api
 
         public async Task<bool> DeletePagamento(int id)
         {
+            var key = _configuration["FunctionKey"];
+
             var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            using (var response = await httpClient.DeleteAsync("api/DeletePagamento?Id=" + id))
+            using (var response = await httpClient.DeleteAsync("api/DeletePagamento?code=" + key + "&Id=" + id))
             {
                 if (response.IsSuccessStatusCode)
                 {

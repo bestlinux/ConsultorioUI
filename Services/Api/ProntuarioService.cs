@@ -12,23 +12,26 @@ namespace ConsultorioUI.Services.Api
         private readonly IHttpClientFactory _httpClientFactory;
         public ILogger<ProntuarioService> _logger;
         private readonly JsonSerializerOptions _options;
-
+        private readonly IConfiguration _configuration;
         private ProntuarioDTO? pronturario;
 
         public ProntuarioService(IHttpClientFactory httpClientFactory,
-        ILogger<ProntuarioService> logger)
+        ILogger<ProntuarioService> logger, IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
             _logger = logger;
             _options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            _configuration = configuration;
         }
 
         public async Task<List<ProntuarioDTO>> GetProntuariosByPaciente(int PacienteID)
         {
             try
             {
+                var key = _configuration["FunctionKey"];
+
                 var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
-                var response = await httpClient.GetAsync("api/GetProntuarioByPaciente?Id=" + PacienteID);
+                var response = await httpClient.GetAsync("api/GetProntuarioByPaciente?code=" + key + "&Id=" + PacienteID);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -63,11 +66,13 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
+                var key = _configuration["FunctionKey"];
+
                 var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
                 ProntuarioDTO prontuarioUpdate = new();
 
-                using (var response = await httpClient.PutAsJsonAsync("api/UpdateProntuario", prontuarioDTO))
+                using (var response = await httpClient.PutAsJsonAsync("api/UpdateProntuario?code=" + key, prontuarioDTO))
                 {
                     if (response.IsSuccessStatusCode)
                     {
