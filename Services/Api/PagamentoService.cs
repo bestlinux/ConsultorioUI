@@ -12,24 +12,28 @@ namespace ConsultorioUI.Services.Api
         private readonly IHttpClientFactory _httpClientFactory;
         public ILogger<PagamentoService> _logger;
         private readonly JsonSerializerOptions _options;
-
+        private readonly IConfiguration _configuration;
         private PagamentoDTO? pagamento;
 
         public PagamentoService(IHttpClientFactory httpClientFactory,
-        ILogger<PagamentoService> logger)
+        ILogger<PagamentoService> logger,
+        IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
             _logger = logger;
             _options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            _configuration = configuration;
         }
         public async Task<PagamentoDTO> CreatePagamento(PagamentoDTO pagamentoDTO)
         {
+            var key = _configuration["FunctionKey"];
+
             var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
             StringContent content = new(JsonSerializer.Serialize(pagamentoDTO),
                                                       Encoding.UTF8, "application/json");
 
-            using (var response = await httpClient.PostAsync("api/CreatePagamento", content))
+            using (var response = await httpClient.PostAsync("api/CreatePagamento?code=" + key, content))
             {
                 if (response.IsSuccessStatusCode)
                 {
@@ -60,8 +64,10 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
+                var key = _configuration["FunctionKey"];
+
                 var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
-                var response = await httpClient.GetAsync("api/GetAllPagamentos");
+                var response = await httpClient.GetAsync("api/GetAllPagamentos?code=" + key);
 
                 var conteudo = await response.Content.ReadAsStringAsync();
 

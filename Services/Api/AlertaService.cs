@@ -14,22 +14,26 @@ namespace ConsultorioUI.Services.Api
         private readonly IHttpClientFactory _httpClientFactory;
         public ILogger<AlertaService> _logger;
         private readonly JsonSerializerOptions _options;
-
+        private readonly IConfiguration _configuration;
         public AlertaService(IHttpClientFactory httpClientFactory,
-        ILogger<AlertaService> logger)
+        ILogger<AlertaService> logger,
+        IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
             _logger = logger;
             _options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            _configuration = configuration;
         }
 
         public async Task<List<AlertaDTO>> GetAlertasByMesAno(int Mes, int Ano)
         {
             try
             {
+                var key = _configuration["FunctionKey"];
+
                 var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-                var response = await httpClient.GetAsync("api/GetAllAlertasByMesAno?Mes=" + Mes + "&Ano=" + Ano);
+                var response = await httpClient.GetAsync("api/GetAllAlertasByMesAno?code=" + key + "&Mes=" + Mes + "&Ano=" + Ano);
 
                 var conteudo = await response.Content.ReadAsStringAsync();
 

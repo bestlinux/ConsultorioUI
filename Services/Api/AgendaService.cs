@@ -12,25 +12,29 @@ namespace ConsultorioUI.Services.Api
         private readonly IHttpClientFactory _httpClientFactory;
         public ILogger<AgendaService> _logger;      
         private readonly JsonSerializerOptions _options;
-
+        private readonly IConfiguration _configuration;
         private AgendaDTO? agenda;
 
         public AgendaService(IHttpClientFactory httpClientFactory,
         ILogger<AgendaService> logger,
-        Settings settings)
+        Settings settings,
+        IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
             _logger = logger;
             _options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            _configuration = configuration;
         }
 
         public async Task<List<AgendaDTO>> GetAgendas()
         {
             try
             {
+                var key = _configuration["FunctionKey"];
+
                 var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-                var response = await httpClient.GetAsync("api/GetAllAgenda");
+                var response = await httpClient.GetAsync("api/GetAllAgenda?code=" + key);
 
 
                 var conteudo = await response.Content.ReadAsStringAsync();
@@ -61,11 +65,13 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
+                var key = _configuration["FunctionKey"];
+
                 var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
                 AgendaDTO? agendaUpdated = new();
 
-                using (var response = await httpClient.PutAsJsonAsync("api/UpdateAgenda", agendaDTO))
+                using (var response = await httpClient.PutAsJsonAsync("api/UpdateAgenda?code=" + key, agendaDTO))
                 {
                     if (response.IsSuccessStatusCode)
                     {
@@ -109,9 +115,11 @@ namespace ConsultorioUI.Services.Api
         }
         public async Task<AgendaDTO> CreateAgenda(AgendaDTO agendaDTO)
         {
+            var key = _configuration["FunctionKey"];
+
             var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            var response = await httpClient.PostAsJsonAsync("api/CreateAgenda", agendaDTO);
+            var response = await httpClient.PostAsJsonAsync("api/CreateAgenda?code=" + key, agendaDTO);
 
             var conteudo = await response.Content.ReadAsStringAsync();
 
@@ -136,9 +144,11 @@ namespace ConsultorioUI.Services.Api
 
         public async Task<bool> DeleteAgenda(int id)
         {
+            var key = _configuration["FunctionKey"];
+
             var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            var response = await httpClient.DeleteAsync("api/DeleteAgenda?Id=" + id);
+            var response = await httpClient.DeleteAsync("api/DeleteAgenda?code=" + key + "&Id=" + id);
 
             if (response.StatusCode == HttpStatusCode.BadRequest)
             {
@@ -166,9 +176,11 @@ namespace ConsultorioUI.Services.Api
 
         public async Task<bool> DeleteAgendaRecorrencia(int? pacienteID)
         {
+            var key = _configuration["FunctionKey"];
+
             var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            var response = await httpClient.DeleteAsync("api/DeleteAgendaByRecorrencia?Id=" + pacienteID);
+            var response = await httpClient.DeleteAsync("api/DeleteAgendaByRecorrencia?code=" + key + "&Id=" + pacienteID);
 
             if (response.StatusCode == HttpStatusCode.BadRequest)
             {
@@ -196,9 +208,11 @@ namespace ConsultorioUI.Services.Api
 
         public async Task<bool> DeleteAgendaPessoalRecorrencia(int? categoriaAgendamento)
         {
+            var key = _configuration["FunctionKey"];
+
             var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            var response = await httpClient.DeleteAsync("api/DeleteAgendaPessoalByRecorrencia?Id=" + categoriaAgendamento);
+            var response = await httpClient.DeleteAsync("api/DeleteAgendaPessoalByRecorrencia?code=" + key + "&Id=" + categoriaAgendamento);
 
             if (response.StatusCode == HttpStatusCode.BadRequest)
             {

@@ -18,21 +18,25 @@ namespace ConsultorioUI.Services.Api
         private readonly IHttpClientFactory _httpClientFactory;
         public ILogger<PacienteService> _logger;
         private readonly JsonSerializerOptions _options;
-
+        private readonly IConfiguration _configuration;
         private PacienteDTO? paciente;
         public PacienteService(IHttpClientFactory httpClientFactory,
-        ILogger<PacienteService> logger)
+        ILogger<PacienteService> logger,
+        IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
             _logger = logger;
             _options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            _configuration = configuration;
         }
 
         public async Task<PacienteDTO> CreatePaciente(PacienteDTO pacienteDTO)
         {
+            var key = _configuration["FunctionKey"];
+
             var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            var response = await httpClient.PostAsJsonAsync("api/CreatePaciente", pacienteDTO);
+            var response = await httpClient.PostAsJsonAsync("api/CreatePaciente?code=" + key, pacienteDTO);
 
             var conteudo = await response.Content.ReadAsStringAsync();
 
@@ -59,8 +63,9 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
+                var key = _configuration["FunctionKey"];
                 var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
-                var response = await httpClient.GetAsync("api/GetAllPacientes");
+                var response = await httpClient.GetAsync("api/GetAllPacientes?code=" + key);
 
                 var conteudo = await response.Content.ReadAsStringAsync();
 
@@ -90,9 +95,11 @@ namespace ConsultorioUI.Services.Api
 
         public async Task<bool> DeletePaciente(int id)
         {
+            var key = _configuration["FunctionKey"];
+
             var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
-            var response = await httpClient.DeleteAsync("api/DeletePaciente?Id=" + id);
+            var response = await httpClient.DeleteAsync("api/DeletePaciente?code=" + key + "&Id=" + id);
 
             if (response.StatusCode == HttpStatusCode.BadRequest)
             {
@@ -122,11 +129,13 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
+                var key = _configuration["FunctionKey"];
+
                 var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
 
                 PacienteDTO? pacienteUpdated = new();
 
-                using (var response = await httpClient.PutAsJsonAsync("api/UpdatePaciente", pacienteDTO))
+                using (var response = await httpClient.PutAsJsonAsync("api/UpdatePaciente?code=" + key, pacienteDTO))
                 {
                     if (response.IsSuccessStatusCode)
                     {
@@ -173,8 +182,10 @@ namespace ConsultorioUI.Services.Api
         {
             try
             {
+                var key = _configuration["FunctionKey"];
+
                 var httpClient = _httpClientFactory.CreateClient("ConsultorioPsicoFunctions");
-                var response = await httpClient.GetAsync("api/GetPacienteById?Id=" + id);
+                var response = await httpClient.GetAsync("api/GetPacienteById?code=" + key + "&Id=" + id);
 
                 if (response.IsSuccessStatusCode)
                 {
